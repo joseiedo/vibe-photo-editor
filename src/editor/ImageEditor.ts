@@ -35,6 +35,8 @@ export class ImageEditor {
   }
 
   private async applyOperation(operation: Operation): Promise<void> {
+    await this.flushAdjustments();
+
     const currentImage = this.canvas.getImage();
     if (!currentImage) return;
 
@@ -88,10 +90,12 @@ export class ImageEditor {
   }
 
   async flushAdjustments(): Promise<void> {
-    if (this.pendingAdjustments && !isDefaultAdjustments(this.pendingAdjustments)) {
-      await this.applyAdjustments(this.pendingAdjustments);
-    }
+    // Clear pending BEFORE awaiting so re-entrant calls from applyOperation don't recurse.
+    const adj = this.pendingAdjustments;
     this.pendingAdjustments = null;
+    if (adj && !isDefaultAdjustments(adj)) {
+      await this.applyAdjustments(adj);
+    }
     this.canvas.updatePreview();
   }
 

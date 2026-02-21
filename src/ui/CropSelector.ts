@@ -100,8 +100,6 @@ export class CropSelector {
 
   private async applyCrop(): Promise<void> {
     if (this.selection && this.selection.width > 0 && this.selection.height > 0) {
-      await this.editor.flushAdjustments();
-
       // Convert preview coordinates to full-res coordinates
       const scale = this.editor.getPreviewScale();
       const fullResRegion: CropRegion = {

@@ -30,7 +30,6 @@ export class MergeDialog {
       btn.addEventListener('click', async () => {
         const position = btn.getAttribute('data-position') as MergePosition;
         if (this.pendingFile) {
-          await this.editor.flushAdjustments();
           await this.editor.merge(this.pendingFile, position);
         }
         this.hide();
