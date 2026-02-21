@@ -66,10 +66,10 @@ The app is a single-page application. No network calls happen after the initial 
 graph TD
     subgraph Browser
         subgraph index.html
-            main["main.ts\ninstantiates all UI components and ImageEditor"]
-            UI["UI Layer\nsrc/ui/"]
-            Editor["Editor Layer\nsrc/editor/"]
-            Ops["Operations Layer\nsrc/operations/"]
+            main["main.ts<br/>instantiates all UI components and ImageEditor"]
+            UI["UI Layer<br/>src/ui/"]
+            Editor["Editor Layer<br/>src/editor/"]
+            Ops["Operations Layer<br/>src/operations/"]
         end
     end
 
@@ -102,9 +102,9 @@ Three layers. Dependencies only flow downward.
 
 ```mermaid
 graph TD
-    UI["**UI Layer** — src/ui/\nManages DOM elements, user input, and display state"]
-    Editor["**Editor Layer** — src/editor/\nOrchestrates operations, history, and canvas rendering"]
-    Ops["**Operations Layer** — src/operations/\nPure image transformations, return new ImageBitmap"]
+    UI["**UI Layer** — src/ui/<br/>Manages DOM elements, user input, and display state"]
+    Editor["**Editor Layer** — src/editor/<br/>Orchestrates operations, history, and canvas rendering"]
+    Ops["**Operations Layer** — src/operations/<br/>Pure image transformations, return new ImageBitmap"]
 
     UI -->|"calls methods on"| Editor
     Editor -->|"instantiates and applies"| Ops
@@ -351,12 +351,12 @@ What happens when the user places and applies a shape.
 
 ```mermaid
 flowchart TD
-    A([User clicks Rect or Circle]) --> B[ShapeDrawer shows overlay\ncentered at 50% of canvas size]
+    A([User clicks Rect or Circle]) --> B[ShapeDrawer shows overlay<br/>centered at 50% of canvas size]
     B --> C{User action?}
-    C -->|drag body| D[Move overlay\nclamp to canvas bounds]
-    C -->|drag corner| E[Resize overlay\nmin 24px, clamp to bounds]
+    C -->|drag body| D[Move overlay<br/>clamp to canvas bounds]
+    C -->|drag corner| E[Resize overlay<br/>min 24px, clamp to bounds]
     C -->|change color or fill| F[updateOverlay + renderPreview]
-    C -->|click same tool button| G([deactivate — overlay hidden\nno shape applied])
+    C -->|click same tool button| G([deactivate — overlay hidden<br/>no shape applied])
     C -->|Escape or panel switch| G
     D --> H[updateOverlay + renderPreview]
     E --> H
@@ -380,18 +380,18 @@ What happens when the user defines and applies a crop.
 
 ```mermaid
 flowchart TD
-    A([User activates Crop panel]) --> B[CropSelector renders overlay\nand four corner handles]
+    A([User activates Crop panel]) --> B[CropSelector renders overlay<br/>and four corner handles]
     B --> C{User action?}
-    C -->|drag body| D[Move overlay\nclamp to canvas bounds]
-    C -->|drag corner| E[Resize overlay\nmin 24px, clamp to bounds]
-    C -->|Escape or panel switch| F([deactivate — overlay hidden\nno crop applied])
+    C -->|drag body| D[Move overlay<br/>clamp to canvas bounds]
+    C -->|drag corner| E[Resize overlay<br/>min 24px, clamp to bounds]
+    C -->|Escape or panel switch| F([deactivate — overlay hidden<br/>no crop applied])
     D --> C
     E --> C
-    C -->|Apply Crop| G[Read overlay position/size\nin preview-space]
+    C -->|Apply Crop| G[Read overlay position/size<br/>in preview-space]
     G --> H[canvas.getPreviewScale]
-    H --> I[Multiply coords by inverse scale\n→ full-res CropRegion]
+    H --> I[Multiply coords by inverse scale<br/>→ full-res CropRegion]
     I --> J[editor.crop with CropRegion]
-    J --> K[CropOperation.apply on OffscreenCanvas\nproduces smaller ImageBitmap]
+    J --> K[CropOperation.apply on OffscreenCanvas<br/>produces smaller ImageBitmap]
     K --> L[Canvas.setImage — preview resizes]
     L --> M[CropSelector removes overlay]
     M --> N([onStateChange — UI updates])
