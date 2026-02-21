@@ -29,6 +29,7 @@ their result when they're done.
 
 - **Transforms**: flip, rotate, crop, upscale
 - **Background removal**: automatic subject isolation via an in-browser ML model
+- **Refine brush**: paint over the image to erase or restore regions after background removal
 - **Adjustments**: brightness, contrast, saturation
 - **Drawing**: rectangles and circles (filled or outlined)
 - **Merge**: composite a second image left, right, top, or bottom
@@ -135,6 +136,7 @@ Components don't talk to each other directly. All coordination goes through `Ima
 | `CategoryTabs` | Switches between Transform, Crop, Draw, Merge, and Adjust panels. |
 | `CropSelector` | Resizable overlay on the preview canvas. Converts preview coordinates to full-resolution. |
 | `ShapeDrawer` | Overlay-based shape tool. A resizable box appears on the canvas; the user moves/resizes it with corner handles, then applies. Works the same way as `CropSelector`. |
+| `MaskBrush` | Erase/Restore brush for refining background removal results. Captures a preview-scale copy of the original image at activation time and paints changes live on the preview canvas, then commits a single `RefineMaskOperation` on mouse-up. |
 | `MergeDialog` | Picks a second image and a merge position (left/right/top/bottom). |
 | `KeyboardShortcuts` | Global key handler. Maps keys to editor actions without coupling to other components. |
 
@@ -207,6 +209,7 @@ and the current image and return a new `ImageBitmap`. Nothing else.
 | `ShapeOperation` | Draw rect or circle. Also exposes a static `draw()` for live preview without committing. |
 | `UpscaleOperation` | Render onto a larger canvas with `imageSmoothingQuality = 'high'`. |
 | `RemoveBgOperation` | Downloads `briaai/RMBG-1.4` on first use, runs segmentation via ONNX/WASM, and applies the resulting mask as the alpha channel. The segmenter instance is cached statically for the session. |
+| `RefineMaskOperation` | Applies a list of brush strokes to the image. Erase strokes set alpha to 0; restore strokes copy all four RGBA channels from the pre-removal original `ImageBitmap` passed at construction time. |
 
 ---
 
@@ -220,6 +223,8 @@ or any `Operation` directly.
 State it holds:
 - Whether an image is loaded
 - Pending adjustment values (brightness, contrast, saturation) previewed but not committed
+- Pending background removal result (mask + threshold) previewed but not committed to history
+- `originalBeforeRemoval` — the `ImageBitmap` captured just before background removal is committed, kept alive so `RefineMaskOperation` can read uncorrupted pixel values when restoring
 - References to `Canvas` and `History`
 
 What it delegates:
@@ -283,8 +288,9 @@ constructor(editor: ImageEditor) {
 Cross-tool deactivation is wired in `main.ts`:
 
 ```ts
-tabs.onDeactivate['crop'] = () => cropSelector.deactivate();
-tabs.onDeactivate['draw'] = () => shapeDrawer.deactivate();
+tabs.onDeactivate['crop']      = () => cropSelector.deactivate();
+tabs.onDeactivate['draw']      = () => shapeDrawer.deactivate();
+tabs.onDeactivate['transform'] = () => maskBrush.deactivate();
 ```
 
 This keeps UI components unaware of each other. `main.ts` also wires the window
@@ -451,6 +457,51 @@ The mask values (0–255) from the model are written directly as the alpha chann
 soft edges where the model is uncertain. The result must be exported as PNG to retain
 transparency; exporting as JPEG will render the transparent areas black.
 
+### 7.6 Refine brush flow
+
+What happens when the user paints a stroke with the refine brush.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant MaskBrush
+    participant ImageEditor
+    participant RefineMaskOperation
+    participant Canvas
+
+    User->>MaskBrush: clicks "Refine Brush"
+    MaskBrush->>ImageEditor: getOriginalBeforeRemoval()
+    ImageEditor-->>MaskBrush: originalImage (ImageBitmap)
+    MaskBrush->>MaskBrush: draw originalImage into temp canvas at preview size
+    MaskBrush->>MaskBrush: getImageData → store as originalImageData
+
+    User->>MaskBrush: mousedown → mousemove
+    loop each point
+        MaskBrush->>MaskBrush: record full-res MaskStroke
+        MaskBrush->>Canvas: getImageData (preview canvas)
+        alt erase mode
+            MaskBrush->>Canvas: set alpha = 0 for pixels in radius
+        else restore mode
+            MaskBrush->>Canvas: copy RGBA from originalImageData for pixels in radius
+        end
+        MaskBrush->>Canvas: putImageData (instant live preview)
+    end
+
+    User->>MaskBrush: mouseup
+    MaskBrush->>ImageEditor: applyRefineMask(strokes)
+    ImageEditor->>RefineMaskOperation: new RefineMaskOperation(strokes, originalBeforeRemoval)
+    ImageEditor->>RefineMaskOperation: apply(ctx, image)
+    RefineMaskOperation->>RefineMaskOperation: pixel loop at full resolution
+    RefineMaskOperation-->>ImageEditor: new ImageBitmap
+    ImageEditor->>Canvas: setImage(newImage)
+    ImageEditor->>ImageEditor: History.push("Refine Mask")
+    ImageEditor->>MaskBrush: onStateChange()
+```
+
+Live preview is driven by a pixel loop on the preview canvas (low resolution, fast).
+The full-resolution `RefineMaskOperation` only runs once on mouse-up. Both erase and
+restore strokes are batched into a single history entry per drag gesture.
+
 ---
 
 ## 8. Design decisions
@@ -512,6 +563,22 @@ WebAssembly. `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` hea
 are set in `vite.config.ts` to enable `SharedArrayBuffer`, which the ONNX WASM threads
 require.
 
+### Storing the original image for the refine brush
+
+Canvas 2D uses premultiplied alpha internally. When a pixel's alpha is set to 0,
+the browser stores its RGB as `(0, 0, 0)` — the colour information is gone. Reading
+it back and restoring the alpha to 255 gives solid black, not the original colour.
+
+To fix this, `ImageEditor` stores `originalBeforeRemoval: ImageBitmap` at the moment
+`commitRemoveBg()` is called, before the removed image replaces the current one.
+`RefineMaskOperation` receives this reference and copies all four RGBA channels from
+it for restore strokes. `MaskBrush` scales the same original into an `ImageData` at
+preview resolution and uses it for the live preview restore pass.
+
+`originalBeforeRemoval` is cleared on `loadImage`, `undo`, and `redo` because any
+of those actions invalidates the connection between the stored original and the
+currently displayed image.
+
 ### No event bus
 
 Components communicate only through `ImageEditor` and the `onStateChange` callback.
@@ -569,6 +636,11 @@ consequence of having no backend.
 
 **Single `onStateChange` listener** — `onStateChange` is a single function reference,
 not a list. Switching to multiple listeners would require changing it to an array.
+
+**Refine brush requires a committed background removal** — `originalBeforeRemoval`
+is only populated after "Apply" is clicked on a pending background removal. Undo
+or redo clears it, so switching history entries invalidates the stored reference.
+Restore strokes painted after an undo have no original to copy from and do nothing.
 
 **Limited accessibility** — Keyboard shortcuts exist but ARIA labels and roles
 haven't been systematically applied. Screen reader support is limited.
@@ -636,9 +708,12 @@ src/
 │   ├── MergeOperation.ts   Composite two images.
 │   ├── AdjustOperation.ts  CSS filter adjustments. Static buildFilter().
 │   ├── ShapeOperation.ts   Draw rect/circle. Static draw() for preview.
-│   ├── UpscaleOperation.ts Scale up with high-quality smoothing.
-│   └── RemoveBgOperation.ts In-browser background removal via RMBG-1.4.
-│                            Static segmenter cache. Applies mask as alpha.
+│   ├── UpscaleOperation.ts  Scale up with high-quality smoothing.
+│   ├── RemoveBgOperation.ts In-browser background removal via RMBG-1.4.
+│   │                        Static segmenter cache. Applies mask as alpha.
+│   └── RefineMaskOperation.ts Applies brush strokes to erase or restore pixels.
+│                            Restore copies RGBA from the original ImageBitmap
+│                            to work around Canvas 2D premultiplied alpha.
 │
 └── ui/
     ├── Toolbar.ts           Upload, undo/redo, download, flip, rotate, upscale.
@@ -646,6 +721,9 @@ src/
     ├── CategoryTabs.ts      Tab switcher with deactivation callbacks.
     ├── CropSelector.ts      Resizable crop overlay.
     ├── ShapeDrawer.ts       Overlay-based shape tool (move + resize handles).
+    ├── MaskBrush.ts         Erase/restore brush for post-removal refinement.
+    │                        Captures originalImageData at activation; commits
+    │                        one RefineMaskOperation per drag gesture.
     ├── MergeDialog.ts       Modal for merge position.
     └── KeyboardShortcuts.ts Global keyboard handler.
 ```
