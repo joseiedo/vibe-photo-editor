@@ -6,17 +6,19 @@ export class History {
   private maxEntries = 50;
 
   push(image: ImageBitmap, description: string): void {
-    // Remove any entries after current index (when undoing and then making new changes)
+    // Discard (and free) any entries ahead of the current pointer.
     if (this.currentIndex < this.entries.length - 1) {
-      this.entries = this.entries.slice(0, this.currentIndex + 1);
+      const evicted = this.entries.splice(this.currentIndex + 1);
+      evicted.forEach(e => e.image.close());
     }
 
     this.entries.push({ image, description });
     this.currentIndex = this.entries.length - 1;
 
-    // Limit history size
+    // Enforce the cap by dropping and freeing the oldest entry.
     if (this.entries.length > this.maxEntries) {
-      this.entries.shift();
+      const evicted = this.entries.shift()!;
+      evicted.image.close();
       this.currentIndex--;
     }
   }
@@ -47,6 +49,7 @@ export class History {
   }
 
   clear(): void {
+    this.entries.forEach(e => e.image.close());
     this.entries = [];
     this.currentIndex = -1;
   }
