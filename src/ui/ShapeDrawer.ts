@@ -1,28 +1,47 @@
+import { createElement, Square, Circle } from 'lucide';
 import { ImageEditor } from '../editor/ImageEditor';
 import { ShapeData, ShapeType } from '../types';
 import { ShapeOperation } from '../operations/ShapeOperation';
 
+function setIcon(btn: HTMLButtonElement, icon: ReturnType<typeof createElement>, filled: boolean): void {
+  if (filled) icon.setAttribute('fill', 'currentColor');
+  btn.innerHTML = '';
+  btn.appendChild(icon);
+}
+
 export class ShapeDrawer {
   private editor: ImageEditor;
   private activeTool: ShapeType | null = null;
+  private isFilled = false;
   private isDragging = false;
   private startX = 0;
   private startY = 0;
 
   constructor(editor: ImageEditor) {
     this.editor = editor;
+    this.initIcons();
     this.setupEventListeners();
+  }
+
+  private initIcons(): void {
+    setIcon(document.getElementById('shape-rect-btn') as HTMLButtonElement, createElement(Square), false);
+    setIcon(document.getElementById('shape-circle-btn') as HTMLButtonElement, createElement(Circle), false);
+    this.renderFilledIcon();
+  }
+
+  private renderFilledIcon(): void {
+    const btn = document.getElementById('shape-filled-btn') as HTMLButtonElement;
+    setIcon(btn, createElement(Circle), this.isFilled);
+    btn.title = this.isFilled ? 'Filled' : 'Outline';
   }
 
   private setupEventListeners(): void {
     document.getElementById('shape-rect-btn')?.addEventListener('click', () => this.toggleTool('rect'));
     document.getElementById('shape-circle-btn')?.addEventListener('click', () => this.toggleTool('circle'));
 
-    document.getElementById('shape-filled-btn')?.addEventListener('click', (e) => {
-      const btn = e.currentTarget as HTMLButtonElement;
-      const filled = btn.dataset.filled !== 'true';
-      btn.dataset.filled = String(filled);
-      btn.textContent = filled ? 'Filled' : 'Outline';
+    document.getElementById('shape-filled-btn')?.addEventListener('click', () => {
+      this.isFilled = !this.isFilled;
+      this.renderFilledIcon();
     });
 
     const canvas = this.editor.getPreviewCanvas();
@@ -100,7 +119,6 @@ export class ShapeDrawer {
 
   private buildPreviewShape(x: number, y: number, width: number, height: number): ShapeData {
     const colorInput = document.getElementById('shape-color') as HTMLInputElement;
-    const filledBtn = document.getElementById('shape-filled-btn') as HTMLButtonElement;
     const lineWidthSelect = document.getElementById('shape-line-width') as HTMLSelectElement;
 
     return {
@@ -110,7 +128,7 @@ export class ShapeDrawer {
       width,
       height,
       color: colorInput.value,
-      filled: filledBtn.dataset.filled === 'true',
+      filled: this.isFilled,
       lineWidth: parseInt(lineWidthSelect.value),
     };
   }

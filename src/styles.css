@@ -171,6 +171,18 @@ body {
   font-size: 12px;
 }
 
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.btn-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
 .tool-btn {
   min-width: 70px;
 }
