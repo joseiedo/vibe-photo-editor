@@ -27,17 +27,35 @@ export class Toolbar {
       this.editor.redo();
     });
 
-    // Download
+    // Save
     document.getElementById('download-btn')?.addEventListener('click', async () => {
       await this.editor.flushAdjustments();
       const format = (document.getElementById('export-format') as HTMLSelectElement).value as 'png' | 'jpeg';
+      const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
       const blob = await this.editor.exportAsBlob(format);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `edited-image.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+
+      // Use native save dialog when available (Chrome/Edge), fallback for Firefox/Safari
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as typeof window & { showSaveFilePicker: Function }).showSaveFilePicker({
+            suggestedName: `edited-image.${format}`,
+            types: [{ description: 'Image', accept: { [mimeType]: [`.${format}`] } }],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } catch (err) {
+          // User cancelled the dialog
+          if ((err as DOMException).name !== 'AbortError') throw err;
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `edited-image.${format}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
     });
 
     // Flip buttons
