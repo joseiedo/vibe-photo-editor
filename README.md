@@ -2,7 +2,7 @@
 
 ![dog](public/dog.jpg)
 
-A browser-based photo editor built with TypeScript and the Canvas API.
+A browser-based photo editor built with TypeScript and the Canvas API. This project main goal is to have a minimal editor and also for me to practice the usage of AI agents like Claude.
 
 ## Features
 
