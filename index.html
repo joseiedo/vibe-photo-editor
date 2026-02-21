@@ -74,6 +74,17 @@
           <button id="remove-bg-btn" class="btn tool-btn">Remove BG</button>
           <button id="apply-remove-bg-btn" class="btn tool-btn btn-primary hidden">Apply</button>
           <span id="remove-bg-status" class="muted"></span>
+          <div class="separator"></div>
+          <button id="refine-brush-btn" class="btn tool-btn" disabled>Refine Brush</button>
+          <div id="brush-controls" class="hidden" style="display: contents;">
+            <button id="brush-erase-btn" class="btn btn-sm btn-primary">Erase</button>
+            <button id="brush-restore-btn" class="btn btn-sm">Restore</button>
+            <div class="slider-group">
+              <label>Size</label>
+              <input type="range" id="brush-size" min="5" max="100" value="20" />
+              <span id="brush-size-value">20</span>
+            </div>
+          </div>
         </div>
 
         <div id="panel-crop" class="tool-panel hidden">

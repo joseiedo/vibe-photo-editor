@@ -5,6 +5,7 @@ import { CropSelector } from './ui/CropSelector';
 import { MergeDialog } from './ui/MergeDialog';
 import { ShapeDrawer } from './ui/ShapeDrawer';
 import { CategoryTabs } from './ui/CategoryTabs';
+import { MaskBrush } from './ui/MaskBrush';
 import { setupKeyboardShortcuts } from './ui/KeyboardShortcuts';
 
 function init(): void {
@@ -27,13 +28,16 @@ function init(): void {
   // other without initialisation order issues (callbacks are invoked later).
   let cropSelector!: CropSelector;
   let shapeDrawer!: ShapeDrawer;
+  let maskBrush!: MaskBrush;
 
   cropSelector = new CropSelector(editor, () => shapeDrawer.deactivate());
   shapeDrawer = new ShapeDrawer(editor);
+  maskBrush = new MaskBrush(editor);
 
   categoryTabs = new CategoryTabs({
     crop: () => cropSelector.deactivate(),
     draw: () => shapeDrawer.deactivate(),
+    transform: () => maskBrush.deactivate(),
   });
 
   new MergeDialog(editor);

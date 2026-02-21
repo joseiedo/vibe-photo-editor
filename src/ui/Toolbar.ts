@@ -81,6 +81,7 @@ export class Toolbar {
     (document.getElementById('download-btn') as HTMLButtonElement).disabled = !hasImage;
 
     document.getElementById('apply-remove-bg-btn')?.classList.toggle('hidden', !hasPendingMask);
+    (document.getElementById('refine-brush-btn') as HTMLButtonElement).disabled = !hasImage;
 
     document.getElementById('no-image-message')?.classList.toggle('hidden', hasImage);
   }

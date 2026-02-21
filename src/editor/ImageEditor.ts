@@ -9,6 +9,7 @@ import { AdjustOperation } from '../operations/AdjustOperation';
 import { ShapeOperation } from '../operations/ShapeOperation';
 import { UpscaleOperation } from '../operations/UpscaleOperation';
 import { RemoveBgOperation, MaskCache } from '../operations/RemoveBgOperation';
+import { RefineMaskOperation, MaskStroke } from '../operations/RefineMaskOperation';
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = { brightness: 100, contrast: 100, saturation: 100 };
 
@@ -28,6 +29,10 @@ export class ImageEditor {
   private onStateChange: () => void;
   private pendingAdjustments: AdjustmentValues | null = null;
   private pendingRemoveBg: PendingRemoveBg | null = null;
+  // Keeps the original image (before background removal) so the refine brush
+  // can copy pixels from it when restoring — needed because Canvas 2D
+  // premultiplies alpha and erased pixels lose their RGB values.
+  private originalBeforeRemoval: ImageBitmap | null = null;
 
   constructor(canvasElement: HTMLCanvasElement, onStateChange: () => void) {
     this.canvas = new Canvas(canvasElement);
@@ -37,6 +42,7 @@ export class ImageEditor {
 
   async loadImage(file: File): Promise<void> {
     this.pendingRemoveBg = null;
+    this.originalBeforeRemoval = null;
     RemoveBgOperation.clearCache();
     const bitmap = await createImageBitmap(file);
     this.canvas.setImage(bitmap);
@@ -147,6 +153,10 @@ export class ImageEditor {
     await this.applyOperation(new UpscaleOperation(scale));
   }
 
+  async applyRefineMask(strokes: MaskStroke[]): Promise<void> {
+    await this.applyOperation(new RefineMaskOperation(strokes, this.originalBeforeRemoval));
+  }
+
   // --- Background removal ---
 
   // Runs the model (or uses the mask cache) and stores the result as pending.
@@ -174,7 +184,7 @@ export class ImageEditor {
   // Commits the pending removal to history.
   async commitRemoveBg(): Promise<void> {
     if (!this.pendingRemoveBg) return;
-    const { mask, threshold } = this.pendingRemoveBg;
+    const { originalImage, mask, threshold } = this.pendingRemoveBg;
     this.pendingRemoveBg = null;
 
     const currentImage = this.canvas.getImage();
@@ -183,6 +193,10 @@ export class ImageEditor {
     const outCanvas = new OffscreenCanvas(currentImage.width, currentImage.height);
     RemoveBgOperation.applyMask(currentImage, mask, threshold, outCanvas);
     const newImage = await createImageBitmap(outCanvas);
+
+    // Store the pre-removal image so the refine brush can copy original pixels
+    // back when restoring (premultiplied-alpha means erased pixels have RGB=0).
+    this.originalBeforeRemoval = originalImage;
 
     this.canvas.setImage(newImage);
     this.history.push(newImage, 'Remove Background');
@@ -224,6 +238,7 @@ export class ImageEditor {
     const entry = this.history.undo();
     if (entry) {
       this.pendingRemoveBg = null;
+      this.originalBeforeRemoval = null;
       this.canvas.setImage(entry.image);
       this.onStateChange();
     }
@@ -233,6 +248,7 @@ export class ImageEditor {
     const entry = this.history.redo();
     if (entry) {
       this.pendingRemoveBg = null;
+      this.originalBeforeRemoval = null;
       this.canvas.setImage(entry.image);
       this.onStateChange();
     }
@@ -260,6 +276,10 @@ export class ImageEditor {
 
   getPreviewScale(): number {
     return this.canvas.getPreviewScale();
+  }
+
+  getOriginalBeforeRemoval(): ImageBitmap | null {
+    return this.originalBeforeRemoval;
   }
 
   getImageDimensions(): { width: number; height: number } | null {
