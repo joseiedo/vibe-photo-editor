@@ -127,7 +127,7 @@ Components don't talk to each other directly. All coordination goes through `Ima
 | `Sliders` | Brightness, Contrast, Saturation. Drives live preview via `setPendingAdjustments`. |
 | `CategoryTabs` | Switches between Transform, Crop, Draw, Merge, and Adjust panels. |
 | `CropSelector` | Resizable overlay on the preview canvas. Converts preview coordinates to full-resolution. |
-| `ShapeDrawer` | Drag-to-draw shapes. Scales coordinates to full resolution before applying. |
+| `ShapeDrawer` | Overlay-based shape tool. A resizable box appears on the canvas; the user moves/resizes it with corner handles, then applies. Works the same way as `CropSelector`. |
 | `MergeDialog` | Picks a second image and a merge position (left/right/top/bottom). |
 | `KeyboardShortcuts` | Global key handler. Maps keys to editor actions without coupling to other components. |
 
@@ -347,29 +347,32 @@ committed to history when the user takes their next action.
 
 ### 7.3 Shape drawing flow
 
-What happens when the user drags to draw a shape.
+What happens when the user places and applies a shape.
 
 ```mermaid
 flowchart TD
-    A([User activates Draw panel]) --> B[ShapeDrawer enables tool]
-    B --> C([mousedown on preview canvas])
-    C --> D[Record start coordinates in preview-space]
-    D --> E([mousemove])
-    E --> F[canvas.drawOnPreview with current ShapeData]
-    F --> G[Redraw preview from ImageBitmap\n+ ShapeOperation.draw on top]
-    G -->|OffscreenCanvas untouched| E
-    E --> H([mouseup])
-    H --> I{drag distance < 2px?}
-    I -->|Yes — accidental click| J([Discard, no state change])
-    I -->|No| K[Scale coords via getPreviewScale]
-    K --> L[editor.applyShape with full-res ShapeData]
-    L --> M[ShapeOperation.apply on OffscreenCanvas]
-    M --> N[History.push]
-    N --> O([onStateChange — UI updates])
+    A([User clicks Rect or Circle]) --> B[ShapeDrawer shows overlay\ncentered at 50% of canvas size]
+    B --> C{User action?}
+    C -->|drag body| D[Move overlay\nclamp to canvas bounds]
+    C -->|drag corner| E[Resize overlay\nmin 24px, clamp to bounds]
+    C -->|change color or fill| F[updateOverlay + renderPreview]
+    C -->|click same tool button| G([deactivate — overlay hidden\nno shape applied])
+    C -->|Escape or panel switch| G
+    D --> H[updateOverlay + renderPreview]
+    E --> H
+    F --> C
+    H --> C
+    C -->|Apply Shape| I[Scale coords via getPreviewScale]
+    I --> J[editor.applyShape with full-res ShapeData]
+    J --> K[ShapeOperation.apply on OffscreenCanvas]
+    K --> L[History.push]
+    L --> M([onStateChange — UI updates])
 ```
 
-During the drag, only the preview canvas is touched. The `OffscreenCanvas` and
-history are unchanged until the user releases the mouse.
+The overlay border color and `border-radius` (50% for circles) update live to
+match the selected color and shape type. On every move or resize, `drawOnPreview`
+redraws the shape on the preview canvas so the user sees an accurate preview.
+The `OffscreenCanvas` is only written when the user clicks Apply Shape.
 
 ### 7.4 Crop selection flow
 
@@ -560,7 +563,7 @@ src/
     ├── Sliders.ts           Adjustment sliders + reset.
     ├── CategoryTabs.ts      Tab switcher with deactivation callbacks.
     ├── CropSelector.ts      Resizable crop overlay.
-    ├── ShapeDrawer.ts       Drag-to-draw with live preview.
+    ├── ShapeDrawer.ts       Overlay-based shape tool (move + resize handles).
     ├── MergeDialog.ts       Modal for merge position.
     └── KeyboardShortcuts.ts Global keyboard handler.
 ```
