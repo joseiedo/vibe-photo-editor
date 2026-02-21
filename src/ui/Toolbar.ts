@@ -35,6 +35,21 @@ export class Toolbar {
       if (factor > 1) this.editor.upscale(factor);
     });
 
+    document.getElementById('remove-bg-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('remove-bg-btn') as HTMLButtonElement;
+      const status = document.getElementById('remove-bg-status') as HTMLSpanElement;
+      btn.disabled = true;
+      try {
+        await this.editor.removeBg((msg) => { status.textContent = msg; });
+        status.textContent = '';
+      } catch (err) {
+        status.textContent = 'Failed';
+        console.error('Background removal failed:', err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
     document.getElementById('flip-h-btn')?.addEventListener('click', () => this.editor.flipHorizontal());
     document.getElementById('flip-v-btn')?.addEventListener('click', () => this.editor.flipVertical());
     document.getElementById('rotate-cw-btn')?.addEventListener('click', () => this.editor.rotate(90));

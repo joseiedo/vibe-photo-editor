@@ -21,12 +21,14 @@ their result when they're done.
 11. [How to extend](#11-how-to-extend)
 12. [File map](#12-file-map)
 13. [Deployment](#13-deployment)
+14. [Third-party licenses](#14-third-party-licenses)
 
 ---
 
 ## 1. What it does
 
 - **Transforms**: flip, rotate, crop, upscale
+- **Background removal**: automatic subject isolation via an in-browser ML model
 - **Adjustments**: brightness, contrast, saturation
 - **Drawing**: rectangles and circles (filled or outlined)
 - **Merge**: composite a second image left, right, top, or bottom
@@ -60,7 +62,9 @@ that aren't needed yet. Adding an operation means adding one class and one call 
 
 ## 3. System overview
 
-The app is a single-page application. No network calls happen after the initial load.
+The app is a single-page application. No image data leaves the user's machine.
+The only external network call is the one-time download of the background removal
+model (~176 MB) from Hugging Face on first use.
 
 ```mermaid
 graph TD
@@ -73,12 +77,13 @@ graph TD
         end
     end
 
+    HF["Hugging Face CDN<br/>(briaai/RMBG-1.4 ONNX weights)"]
+
     main --> UI
     UI -->|"event handlers"| Editor
     Editor -->|"instantiates and applies"| Ops
+    Ops -->|"first Remove BG click"| HF
 ```
-
-Image data never leaves the user's machine.
 
 ---
 
@@ -92,6 +97,8 @@ Image data never leaves the user's machine.
 | Canvas | `HTMLCanvasElement` (preview) + `OffscreenCanvas` (editing) |
 | Icons | Lucide (runtime only) |
 | Styling | Plain CSS with custom properties, dark theme |
+| ML inference | `@huggingface/transformers` (Apache-2.0) — runs ONNX models via WebAssembly |
+| BG removal model | `briaai/RMBG-1.4` — BRIA AI non-commercial license (see [§14](#14-third-party-licenses)) |
 | Backend | None |
 
 ---
@@ -123,7 +130,7 @@ Components don't talk to each other directly. All coordination goes through `Ima
 
 | Component | What it does |
 |---|---|
-| `Toolbar` | Upload, Undo/Redo, Download, Flip, Rotate, Upscale |
+| `Toolbar` | Upload, Undo/Redo, Download, Flip, Rotate, Upscale, Remove BG |
 | `Sliders` | Brightness, Contrast, Saturation. Drives live preview via `setPendingAdjustments`. |
 | `CategoryTabs` | Switches between Transform, Crop, Draw, Merge, and Adjust panels. |
 | `CropSelector` | Resizable overlay on the preview canvas. Converts preview coordinates to full-resolution. |
@@ -199,6 +206,7 @@ and the current image and return a new `ImageBitmap`. Nothing else.
 | `AdjustOperation` | Brightness, contrast, saturation via CSS filter strings on the canvas context. |
 | `ShapeOperation` | Draw rect or circle. Also exposes a static `draw()` for live preview without committing. |
 | `UpscaleOperation` | Render onto a larger canvas with `imageSmoothingQuality = 'high'`. |
+| `RemoveBgOperation` | Downloads `briaai/RMBG-1.4` on first use, runs segmentation via ONNX/WASM, and applies the resulting mask as the alpha channel. The segmenter instance is cached statically for the session. |
 
 ---
 
@@ -397,6 +405,52 @@ flowchart TD
     M --> N([onStateChange — UI updates])
 ```
 
+### 7.5 Background removal flow
+
+What happens when the user clicks "Remove BG".
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Toolbar
+    participant ImageEditor
+    participant RemoveBgOperation
+    participant ONNX as ONNX Runtime (WASM)
+    participant HF as Hugging Face CDN
+    participant Canvas
+    participant History
+
+    User->>Toolbar: clicks Remove BG
+    Toolbar->>Toolbar: disable button, show status span
+    Toolbar->>ImageEditor: removeBg(onProgress)
+    ImageEditor->>RemoveBgOperation: new RemoveBgOperation(onProgress)
+    ImageEditor->>RemoveBgOperation: apply(ctx, image)
+
+    alt first call this session
+        RemoveBgOperation->>HF: download RMBG-1.4 ONNX weights (~176 MB)
+        HF-->>RemoveBgOperation: model cached in memory
+    end
+
+    RemoveBgOperation->>RemoveBgOperation: draw image to OffscreenCanvas → convertToBlob → createObjectURL
+    RemoveBgOperation->>ONNX: segmenter(url)
+    ONNX-->>RemoveBgOperation: [{ mask: RawImage }]
+    RemoveBgOperation->>RemoveBgOperation: iterate pixels, set alpha = mask value
+    RemoveBgOperation-->>ImageEditor: new ImageBitmap (transparent background)
+
+    ImageEditor->>Canvas: setImage(newImage)
+    ImageEditor->>History: push(newImage, "Remove Background")
+    ImageEditor->>Toolbar: onStateChange()
+    Toolbar->>Toolbar: re-enable button, clear status span
+```
+
+The model download is a one-time cost per browser session. The `@huggingface/transformers`
+library caches the weights in memory via its own singleton; `RemoveBgOperation` also
+holds a static reference to the loaded segmenter so it is not reconstructed between calls.
+
+The mask values (0–255) from the model are written directly as the alpha channel, preserving
+soft edges where the model is uncertain. The result must be exported as PNG to retain
+transparency; exporting as JPEG will render the transparent areas black.
+
 ---
 
 ## 8. Design decisions
@@ -438,6 +492,25 @@ discards the redo stack. The 50-entry cap bounds memory usage.
 
 Every operation produces a new `ImageBitmap`. The input is never modified. This makes
 the history stack reliable and avoids hard-to-trace shared-reference bugs.
+
+### In-browser ML for background removal
+
+Background removal requires a segmentation model. Two deployment options exist: an
+external API (e.g. remove.bg) or an in-browser model.
+
+The in-browser approach was chosen because it is consistent with the app's core
+constraint — no data leaves the machine. An API call would mean uploading images to
+a third-party server, breaking the privacy guarantee.
+
+The tradeoff is the first-use latency: the `briaai/RMBG-1.4` ONNX model is ~176 MB
+and must be downloaded before the first inference. Subsequent uses in the same session
+are fast because the model is cached in memory. The browser may also persist the model
+across sessions via its own caching mechanisms.
+
+The `@huggingface/transformers` library runs inference on the ONNX Runtime compiled to
+WebAssembly. `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers
+are set in `vite.config.ts` to enable `SharedArrayBuffer`, which the ONNX WASM threads
+require.
 
 ### No event bus
 
@@ -483,6 +556,10 @@ type HistoryEntry = { image: ImageBitmap; description: string };
 ---
 
 ## 10. Known limitations
+
+**Background removal first-load cost** — The `briaai/RMBG-1.4` ONNX model is ~176 MB.
+The first click on "Remove BG" in a session will block until the download completes.
+Progress is shown in the status span next to the button. No offline fallback exists.
 
 **Memory** — Large images across 50 history entries can use a lot of memory.
 `ImageBitmap` objects can't be compressed. The 50-entry cap limits the worst case.
@@ -530,7 +607,10 @@ Update `MAX_HISTORY` in `src/editor/History.ts`.
 ```
 /
 ├── index.html              All DOM structure. No JS framework.
-├── vite.config.ts          Build config. Sets outDir and base URL.
+├── vite.config.ts          Build config. Sets outDir and base URL. Also sets
+│                           COOP/COEP headers (required for SharedArrayBuffer
+│                           used by the ONNX WASM runtime) and excludes
+│                           @huggingface/transformers from Vite pre-bundling.
 ├── tsconfig.json           TypeScript strict mode, ES2020, noEmit.
 ├── package.json            deps: lucide. devDeps: vite, typescript.
 └── public/
@@ -556,7 +636,9 @@ src/
 │   ├── MergeOperation.ts   Composite two images.
 │   ├── AdjustOperation.ts  CSS filter adjustments. Static buildFilter().
 │   ├── ShapeOperation.ts   Draw rect/circle. Static draw() for preview.
-│   └── UpscaleOperation.ts Scale up with high-quality smoothing.
+│   ├── UpscaleOperation.ts Scale up with high-quality smoothing.
+│   └── RemoveBgOperation.ts In-browser background removal via RMBG-1.4.
+│                            Static segmenter cache. Applies mask as alpha.
 │
 └── ui/
     ├── Toolbar.ts           Upload, undo/redo, download, flip, rotate, upscale.
@@ -582,3 +664,35 @@ the custom domain to the repository. Vite's `base` is set to `'/'` because the
 custom domain serves from the root, not a subdirectory.
 
 No server configuration needed.
+
+---
+
+## 14. Third-party licenses
+
+The project's `LICENSE` file (MIT) covers only the project's own source code.
+Third-party runtime dependencies carry their own licenses.
+
+### `@huggingface/transformers` — Apache License 2.0
+
+**Commercial use:** Allowed.
+
+Apache-2.0 is compatible with MIT. No change to the project license is required.
+When distributing the compiled app (i.e., `dist/`), Apache-2.0 requires that the
+original copyright notice and license text are preserved in the output. Vite includes
+the library code in the bundle, so the obligation applies to the built artifact.
+
+### `briaai/RMBG-1.4` model — BRIA AI Non-Commercial License
+
+**Commercial use:** Not allowed without a separate paid agreement with BRIA AI
+(`sales@bria.ai`).
+
+The model weights are downloaded at runtime from the Hugging Face CDN and are never
+bundled with or distributed by this project. The license permits non-commercial use
+for evaluation and demonstration purposes only. Production deployment — even
+unpaid — may fall outside the permitted scope if it serves end users at scale.
+
+**This does not affect the project's MIT license**, which covers only the project's
+own code. Developers who fork or deploy this project must independently comply with
+the BRIA AI license for the model. A commercial deployment would require replacing
+`briaai/RMBG-1.4` with a model that has a permissive license (e.g. `briaai/RMBG-2.0`
+if released under different terms, or an Apache-2.0 / MIT-licensed alternative).

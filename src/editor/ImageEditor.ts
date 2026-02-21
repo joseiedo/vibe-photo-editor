@@ -8,6 +8,7 @@ import { MergeOperation } from '../operations/MergeOperation';
 import { AdjustOperation } from '../operations/AdjustOperation';
 import { ShapeOperation } from '../operations/ShapeOperation';
 import { UpscaleOperation } from '../operations/UpscaleOperation';
+import { RemoveBgOperation } from '../operations/RemoveBgOperation';
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = { brightness: 100, contrast: 100, saturation: 100 };
 
@@ -129,6 +130,10 @@ export class ImageEditor {
 
   async upscale(scale: number): Promise<void> {
     await this.applyOperation(new UpscaleOperation(scale));
+  }
+
+  async removeBg(onProgress: (status: string) => void): Promise<void> {
+    await this.applyOperation(new RemoveBgOperation(onProgress));
   }
 
   getDefaultAdjustments(): AdjustmentValues {
