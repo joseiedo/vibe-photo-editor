@@ -78,6 +78,10 @@ export class Toolbar {
     mergeInput.disabled = !hasImage;
     mergeLabel.classList.toggle('disabled', !hasImage);
 
+    (document.getElementById('shape-filled-btn') as HTMLButtonElement).disabled = !hasImage;
+    (document.getElementById('shape-line-width') as HTMLSelectElement).disabled = !hasImage;
+    (document.getElementById('shape-color') as HTMLInputElement).disabled = !hasImage;
+
     // No image message
     document.getElementById('no-image-message')?.classList.toggle('hidden', hasImage);
   }

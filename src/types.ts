@@ -24,6 +24,19 @@ export interface CropRegion {
 
 export type MergePosition = 'left' | 'right' | 'top' | 'bottom';
 
+export type ShapeType = 'rect' | 'circle';
+
+export interface ShapeData {
+  type: ShapeType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  lineWidth: number;
+  filled: boolean;
+}
+
 export interface AdjustmentValues {
   brightness: number;
   contrast: number;

@@ -11,7 +11,7 @@ export class CropSelector {
   private startY = 0;
   private selection: CropRegion | null = null;
 
-  constructor(editor: ImageEditor) {
+  constructor(editor: ImageEditor, private onActivate: () => void = () => {}) {
     this.editor = editor;
     this.overlay = document.getElementById('crop-overlay') as HTMLDivElement;
     this.cropBtn = document.getElementById('crop-btn') as HTMLButtonElement;
@@ -87,10 +87,15 @@ export class CropSelector {
   }
 
   private startCropMode(): void {
+    this.onActivate();
     this.isActive = true;
     this.cropBtn.textContent = 'Apply Crop';
     this.cropBtn.classList.add('btn-primary');
     this.editor.getPreviewCanvas().style.cursor = 'crosshair';
+  }
+
+  deactivate(): void {
+    if (this.isActive) this.cancelCrop();
   }
 
   private async applyCrop(): Promise<void> {

@@ -48,6 +48,17 @@
             <input type="file" id="merge-input" accept="image/*" hidden disabled />
             Merge
           </label>
+          <div class="separator"></div>
+          <button id="shape-rect-btn" class="btn tool-btn" disabled>Rect</button>
+          <button id="shape-circle-btn" class="btn tool-btn" disabled>Circle</button>
+          <input type="color" id="shape-color" value="#e94560" class="color-input" title="Shape color" />
+          <button id="shape-filled-btn" class="btn btn-sm" data-filled="false">Outline</button>
+          <select id="shape-line-width" class="select">
+            <option value="1">1px</option>
+            <option value="2" selected>2px</option>
+            <option value="4">4px</option>
+            <option value="8">8px</option>
+          </select>
         </div>
         <div class="sliders">
           <div class="slider-group">

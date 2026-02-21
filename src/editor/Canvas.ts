@@ -74,6 +74,15 @@ export class Canvas {
     return this.previewCanvas;
   }
 
+  getPreviewContext(): CanvasRenderingContext2D {
+    return this.previewCtx;
+  }
+
+  drawOnPreview(drawFn: (ctx: CanvasRenderingContext2D) => void, filter?: string): void {
+    this.updatePreview(filter);
+    drawFn(this.previewCtx);
+  }
+
   getPreviewScale(): number {
     if (!this.currentImage) return 1;
     return this.previewCanvas.width / this.currentImage.width;

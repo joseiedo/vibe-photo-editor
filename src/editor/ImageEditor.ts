@@ -1,11 +1,12 @@
 import { Canvas } from './Canvas';
 import { History } from './History';
-import { Operation, CropRegion, MergePosition, AdjustmentValues } from '../types';
+import { Operation, CropRegion, MergePosition, AdjustmentValues, ShapeData } from '../types';
 import { FlipOperation } from '../operations/FlipOperation';
 import { RotateOperation } from '../operations/RotateOperation';
 import { CropOperation } from '../operations/CropOperation';
 import { MergeOperation } from '../operations/MergeOperation';
 import { AdjustOperation } from '../operations/AdjustOperation';
+import { ShapeOperation } from '../operations/ShapeOperation';
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = { brightness: 100, contrast: 100, saturation: 100 };
 
@@ -98,6 +99,27 @@ export class ImageEditor {
   resetPreview(): void {
     this.pendingAdjustments = null;
     this.canvas.updatePreview();
+  }
+
+  // Redraws the preview (respecting any pending adjustment filter) then calls
+  // drawFn so callers can paint on top without touching the stored image.
+  drawOnPreview(drawFn: (ctx: CanvasRenderingContext2D) => void): void {
+    const filter = this.pendingAdjustments
+      ? AdjustOperation.buildFilter(this.pendingAdjustments)
+      : undefined;
+    this.canvas.drawOnPreview(drawFn, filter);
+  }
+
+  // Refresh preview without clearing pending adjustments (used after shape tool deactivation)
+  refreshPreview(): void {
+    const filter = this.pendingAdjustments
+      ? AdjustOperation.buildFilter(this.pendingAdjustments)
+      : undefined;
+    this.canvas.updatePreview(filter);
+  }
+
+  async applyShape(shape: ShapeData): Promise<void> {
+    await this.applyOperation(new ShapeOperation(shape));
   }
 
   getDefaultAdjustments(): AdjustmentValues {

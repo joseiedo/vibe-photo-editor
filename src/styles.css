@@ -312,6 +312,26 @@ body {
   display: none !important;
 }
 
+/* Color picker */
+.color-input {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: calc(var(--radius) - 2px);
+}
+
 /* Separator */
 .separator {
   width: 1px;

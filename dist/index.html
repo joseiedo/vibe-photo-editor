@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photo Editor</title>
+    <script type="module" crossorigin src="/vibe-photo-editor/assets/index-DmQWGsxG.js"></script>
+    <link rel="stylesheet" crossorigin href="/vibe-photo-editor/assets/index-B-Yclsfq.css">
+  </head>
+  <body>
+    <div id="app">
+      <header class="toolbar-top">
+        <div class="toolbar-left">
+          <label class="btn">
+            <input type="file" id="upload-input" accept="image/*" hidden />
+            Upload
+          </label>
+          <div class="separator"></div>
+          <button id="undo-btn" class="btn btn-ghost" disabled>Undo</button>
+          <button id="redo-btn" class="btn btn-ghost" disabled>Redo</button>
+        </div>
+        <div class="toolbar-right">
+          <select id="export-format" class="select">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+          </select>
+          <button id="download-btn" class="btn btn-primary" disabled>Download</button>
+        </div>
+      </header>
+
+      <main class="canvas-container">
+        <canvas id="preview-canvas"></canvas>
+        <div id="crop-overlay" class="crop-overlay hidden"></div>
+        <div id="no-image-message" class="no-image-message">
+          <p>Upload an image to start editing</p>
+        </div>
+      </main>
+
+      <footer class="toolbar-bottom">
+        <div class="tools">
+          <button id="flip-h-btn" class="btn tool-btn" disabled>Flip H</button>
+          <button id="flip-v-btn" class="btn tool-btn" disabled>Flip V</button>
+          <div class="separator"></div>
+          <button id="rotate-ccw-btn" class="btn tool-btn" disabled>−90°</button>
+          <button id="rotate-cw-btn" class="btn tool-btn" disabled>+90°</button>
+          <div class="separator"></div>
+          <button id="crop-btn" class="btn tool-btn" disabled>Crop</button>
+          <label class="btn tool-btn disabled" id="merge-label">
+            <input type="file" id="merge-input" accept="image/*" hidden disabled />
+            Merge
+          </label>
+          <div class="separator"></div>
+          <button id="shape-rect-btn" class="btn tool-btn" disabled>Rect</button>
+          <button id="shape-circle-btn" class="btn tool-btn" disabled>Circle</button>
+          <input type="color" id="shape-color" value="#e94560" class="color-input" title="Shape color" />
+          <button id="shape-filled-btn" class="btn btn-sm" data-filled="false">Outline</button>
+          <select id="shape-line-width" class="select">
+            <option value="1">1px</option>
+            <option value="2" selected>2px</option>
+            <option value="4">4px</option>
+            <option value="8">8px</option>
+          </select>
+        </div>
+        <div class="sliders">
+          <div class="slider-group">
+            <label>Brightness</label>
+            <input type="range" id="brightness-slider" min="0" max="200" value="100" disabled />
+            <span id="brightness-value">100%</span>
+          </div>
+          <div class="slider-group">
+            <label>Contrast</label>
+            <input type="range" id="contrast-slider" min="0" max="200" value="100" disabled />
+            <span id="contrast-value">100%</span>
+          </div>
+          <div class="slider-group">
+            <label>Saturation</label>
+            <input type="range" id="saturation-slider" min="0" max="200" value="100" disabled />
+            <span id="saturation-value">100%</span>
+          </div>
+          <button id="reset-adjustments-btn" class="btn btn-sm btn-ghost" disabled>Reset adjustments</button>
+        </div>
+      </footer>
+
+      <div id="merge-dialog" class="dialog hidden">
+        <div class="dialog-content">
+          <h3>Position</h3>
+          <div class="dialog-buttons">
+            <button data-position="left" class="btn">Left</button>
+            <button data-position="right" class="btn">Right</button>
+            <button data-position="top" class="btn">Top</button>
+            <button data-position="bottom" class="btn">Bottom</button>
+          </div>
+          <button id="merge-cancel" class="btn btn-ghost">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
