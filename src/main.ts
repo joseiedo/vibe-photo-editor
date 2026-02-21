@@ -5,6 +5,7 @@ import { CropSelector } from './ui/CropSelector';
 import { MergeDialog } from './ui/MergeDialog';
 import { ShapeDrawer } from './ui/ShapeDrawer';
 import { CategoryTabs } from './ui/CategoryTabs';
+import { setupKeyboardShortcuts } from './ui/KeyboardShortcuts';
 
 function init(): void {
   const canvas = document.getElementById('preview-canvas') as HTMLCanvasElement;
@@ -36,6 +37,7 @@ function init(): void {
   });
 
   new MergeDialog(editor);
+  setupKeyboardShortcuts();
 
   window.addEventListener('resize', () => {
     if (editor.hasImage()) editor.refreshPreview();

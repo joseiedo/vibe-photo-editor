@@ -390,6 +390,22 @@ body {
   user-select: none;
 }
 
+kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-family: inherit;
+  border-radius: 3px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  margin-left: 4px;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Color picker */
 .color-input {
   width: 32px;

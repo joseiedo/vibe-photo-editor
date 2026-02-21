@@ -12,18 +12,18 @@
         <div class="toolbar-left">
           <label class="btn">
             <input type="file" id="upload-input" accept="image/*" hidden />
-            Upload
+            Upload <kbd>Ctrl+O</kbd>
           </label>
           <div class="separator"></div>
-          <button id="undo-btn" class="btn btn-ghost" disabled>Undo</button>
-          <button id="redo-btn" class="btn btn-ghost" disabled>Redo</button>
+          <button id="undo-btn" class="btn btn-ghost" disabled>Undo <kbd>Ctrl+Z</kbd></button>
+          <button id="redo-btn" class="btn btn-ghost" disabled>Redo <kbd>Ctrl+Y</kbd></button>
         </div>
         <div class="toolbar-right">
           <select id="export-format" class="select">
             <option value="png">PNG</option>
             <option value="jpeg">JPEG</option>
           </select>
-          <button id="download-btn" class="btn btn-primary" disabled>Download</button>
+          <button id="download-btn" class="btn btn-primary" disabled>Download <kbd>Ctrl+S</kbd></button>
         </div>
       </header>
 
@@ -42,19 +42,19 @@
 
       <footer class="toolbar-bottom">
         <div class="category-tabs">
-          <button class="btn category-btn" id="cat-transform" disabled>Transform</button>
-          <button class="btn category-btn" id="cat-crop" disabled>Crop</button>
-          <button class="btn category-btn" id="cat-draw" disabled>Draw</button>
-          <button class="btn category-btn" id="cat-merge" disabled>Merge</button>
-          <button class="btn category-btn" id="cat-adjust" disabled>Adjust</button>
+          <button class="btn category-btn" id="cat-transform" disabled>Transform <kbd>T</kbd></button>
+          <button class="btn category-btn" id="cat-crop" disabled>Crop <kbd>C</kbd></button>
+          <button class="btn category-btn" id="cat-draw" disabled>Draw <kbd>D</kbd></button>
+          <button class="btn category-btn" id="cat-merge" disabled>Merge <kbd>M</kbd></button>
+          <button class="btn category-btn" id="cat-adjust" disabled>Adjust <kbd>A</kbd></button>
         </div>
 
         <div id="panel-transform" class="tool-panel hidden">
-          <button id="flip-h-btn" class="btn tool-btn">Flip H</button>
-          <button id="flip-v-btn" class="btn tool-btn">Flip V</button>
+          <button id="flip-h-btn" class="btn tool-btn">Flip H <kbd>H</kbd></button>
+          <button id="flip-v-btn" class="btn tool-btn">Flip V <kbd>V</kbd></button>
           <div class="separator"></div>
-          <button id="rotate-ccw-btn" class="btn tool-btn">−90°</button>
-          <button id="rotate-cw-btn" class="btn tool-btn">+90°</button>
+          <button id="rotate-ccw-btn" class="btn tool-btn">−90° <kbd>[</kbd></button>
+          <button id="rotate-cw-btn" class="btn tool-btn">+90° <kbd>]</kbd></button>
           <div class="separator"></div>
           <input type="number" id="upscale-factor" class="input-sm" value="2" min="1.1" max="8" step="0.5" />
           <span class="muted">×</span>
@@ -67,11 +67,11 @@
 
         <div id="panel-draw" class="tool-panel hidden">
           <span class="panel-label">Shapes</span>
-          <button id="shape-rect-btn" class="btn btn-icon" title="Rectangle"></button>
-          <button id="shape-circle-btn" class="btn btn-icon" title="Circle"></button>
+          <button id="shape-rect-btn" class="btn btn-icon" title="Rectangle (R)"></button>
+          <button id="shape-circle-btn" class="btn btn-icon" title="Circle (E)"></button>
           <div class="separator"></div>
           <input type="color" id="shape-color" value="#e94560" class="color-input" title="Shape color" />
-          <button id="shape-filled-btn" class="btn btn-icon" title="Outline"></button>
+          <button id="shape-filled-btn" class="btn btn-icon" title="Outline (F)"></button>
           <select id="shape-line-width" class="select">
             <option value="1">1px</option>
             <option value="2" selected>2px</option>
