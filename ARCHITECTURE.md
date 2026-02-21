@@ -258,8 +258,14 @@ at 50.
 - `push()` — Appends and discards any entries ahead of the current pointer.
 - `undo()` / `redo()` — Moves the pointer and returns the image.
 - `canUndo()` / `canRedo()` — Checks availability.
+- `clear()` — Closes and drops all entries.
 
 When the 50-entry limit is hit, the oldest entry is dropped before pushing the new one.
+
+`ImageBitmap` holds GPU-backed memory that the garbage collector does not reliably
+release on its own. `.close()` is called explicitly on every evicted bitmap: the redo
+tail trimmed by a new push, the oldest entry dropped by the cap, and all entries wiped
+by `clear()`. This keeps GPU memory proportional to the number of live history entries.
 
 ### `Operations`
 
@@ -575,9 +581,12 @@ To fix this, `ImageEditor` stores `originalBeforeRemoval: ImageBitmap` at the mo
 it for restore strokes. `MaskBrush` scales the same original into an `ImageData` at
 preview resolution and uses it for the live preview restore pass.
 
-`originalBeforeRemoval` is cleared on `loadImage`, `undo`, and `redo` because any
-of those actions invalidates the connection between the stored original and the
-currently displayed image.
+`originalBeforeRemoval` is cleared (and `.close()` called on the bitmap) on
+`loadImage`, `undo`, and `redo` — any of those actions invalidates the connection
+between the stored original and the currently displayed image. It is also closed when
+`MaskBrush.deactivate()` is called, via `ImageEditor.closeOriginalBeforeRemoval()`,
+which frees the GPU memory as soon as the user is done refining rather than holding
+it for the rest of the session.
 
 ### No event bus
 
@@ -630,6 +639,9 @@ Progress is shown in the status span next to the button. No offline fallback exi
 
 **Memory** — Large images across 50 history entries can use a lot of memory.
 `ImageBitmap` objects can't be compressed. The 50-entry cap limits the worst case.
+Evicted bitmaps are explicitly closed (`.close()`) to release GPU memory promptly.
+The ONNX segmenter (~176 MB) remains in memory for the full session once loaded —
+there is no mechanism to unload it short of reloading the page.
 
 **No cross-session history** — Reloading the page resets everything. Intentional
 consequence of having no backend.
