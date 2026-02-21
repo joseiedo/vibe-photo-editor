@@ -230,19 +230,30 @@ body {
 /* Crop overlay */
 .crop-overlay {
   position: absolute;
-  border: 1.5px dashed hsl(var(--primary));
-  background: hsl(var(--primary) / 0.05);
-  pointer-events: none;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  cursor: move;
+  touch-action: none;
+  z-index: 10;
 }
 
 .crop-overlay.hidden {
   display: none;
 }
 
-.crop-overlay.active {
-  pointer-events: auto;
-  cursor: move;
+.crop-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 3px;
+  touch-action: none;
 }
+
+.crop-handle-nw { top: -9px;  left: -9px;  cursor: nw-resize; }
+.crop-handle-ne { top: -9px;  right: -9px; cursor: ne-resize; }
+.crop-handle-sw { bottom: -9px; left: -9px;  cursor: sw-resize; }
+.crop-handle-se { bottom: -9px; right: -9px; cursor: se-resize; }
 
 /* Sliders */
 .slider-group {
