@@ -35,6 +35,12 @@
           <div class="crop-handle crop-handle-sw"></div>
           <div class="crop-handle crop-handle-se"></div>
         </div>
+        <div id="shape-overlay" class="shape-overlay hidden">
+          <div class="shape-handle shape-handle-nw"></div>
+          <div class="shape-handle shape-handle-ne"></div>
+          <div class="shape-handle shape-handle-sw"></div>
+          <div class="shape-handle shape-handle-se"></div>
+        </div>
         <div id="no-image-message" class="no-image-message">
           <p>Upload an image to start editing</p>
         </div>
@@ -78,6 +84,7 @@
             <option value="4">4px</option>
             <option value="8">8px</option>
           </select>
+          <button id="shape-apply-btn" class="btn tool-btn btn-primary hidden">Apply Shape</button>
         </div>
 
         <div id="panel-merge" class="tool-panel hidden">

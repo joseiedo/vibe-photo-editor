@@ -267,6 +267,33 @@ body {
 .crop-handle-sw { bottom: -9px; left: -9px;  cursor: sw-resize; }
 .crop-handle-se { bottom: -9px; right: -9px; cursor: se-resize; }
 
+/* Shape overlay */
+.shape-overlay {
+  position: absolute;
+  border: 2px dashed #fff;
+  cursor: move;
+  touch-action: none;
+  z-index: 10;
+}
+
+.shape-overlay.hidden {
+  display: none;
+}
+
+.shape-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 3px;
+  touch-action: none;
+}
+
+.shape-handle-nw { top: -9px;  left: -9px;  cursor: nw-resize; }
+.shape-handle-ne { top: -9px;  right: -9px; cursor: ne-resize; }
+.shape-handle-sw { bottom: -9px; left: -9px;  cursor: sw-resize; }
+.shape-handle-se { bottom: -9px; right: -9px; cursor: se-resize; }
+
 /* Sliders */
 .slider-group {
   display: flex;
