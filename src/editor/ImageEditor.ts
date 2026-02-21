@@ -282,6 +282,11 @@ export class ImageEditor {
     return this.originalBeforeRemoval;
   }
 
+  closeOriginalBeforeRemoval(): void {
+    this.originalBeforeRemoval?.close();
+    this.originalBeforeRemoval = null;
+  }
+
   getImageDimensions(): { width: number; height: number } | null {
     const image = this.canvas.getImage();
     if (!image) return null;

@@ -83,6 +83,7 @@ export class MaskBrush {
     this.drawing = false;
     this.strokes = [];
     this.originalImageData = null;
+    this.editor.closeOriginalBeforeRemoval();
     const canvas = this.editor.getPreviewCanvas();
     canvas.style.cursor = '';
     canvas.removeEventListener('mousedown', this.onMouseDown);
