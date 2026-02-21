@@ -453,6 +453,47 @@ kbd {
   border-radius: calc(var(--radius) - 2px);
 }
 
+/* Mobile */
+@media (max-width: 640px) {
+  kbd {
+    display: none;
+  }
+
+  .toolbar-top {
+    padding: 8px 12px;
+  }
+
+  .category-tabs {
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    scrollbar-width: none;
+  }
+
+  .category-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tool-panel {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .slider-group {
+    width: 100%;
+  }
+
+  .slider-group input[type="range"] {
+    flex: 1;
+    width: auto;
+  }
+
+  .dialog-content {
+    min-width: 0;
+    width: calc(100vw - 32px);
+  }
+}
+
 /* Separator */
 .separator {
   width: 1px;
