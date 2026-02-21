@@ -4,15 +4,13 @@ import { ShapeOperation } from '../operations/ShapeOperation';
 
 export class ShapeDrawer {
   private editor: ImageEditor;
-  private onActivate: () => void;
   private activeTool: ShapeType | null = null;
   private isDragging = false;
   private startX = 0;
   private startY = 0;
 
-  constructor(editor: ImageEditor, onActivate: () => void) {
+  constructor(editor: ImageEditor) {
     this.editor = editor;
-    this.onActivate = onActivate;
     this.setupEventListeners();
   }
 
@@ -41,9 +39,7 @@ export class ShapeDrawer {
     container.addEventListener('mousemove', (e) => {
       if (!this.isDragging) return;
       const rect = canvas.getBoundingClientRect();
-      const endX = e.clientX - rect.left;
-      const endY = e.clientY - rect.top;
-      this.renderPreview(endX, endY);
+      this.renderPreview(e.clientX - rect.left, e.clientY - rect.top);
     });
 
     container.addEventListener('mouseup', async (e) => {
@@ -53,9 +49,7 @@ export class ShapeDrawer {
       const endX = e.clientX - rect.left;
       const endY = e.clientY - rect.top;
 
-      const width = Math.abs(endX - this.startX);
-      const height = Math.abs(endY - this.startY);
-      if (width > 2 && height > 2) {
+      if (Math.abs(endX - this.startX) > 2 && Math.abs(endY - this.startY) > 2) {
         await this.commit(endX, endY);
       } else {
         this.editor.refreshPreview();
@@ -70,21 +64,17 @@ export class ShapeDrawer {
   private toggleTool(tool: ShapeType): void {
     if (this.activeTool === tool) {
       this.deactivate();
-      return;
+    } else {
+      this.activeTool = tool;
+      this.editor.getPreviewCanvas().style.cursor = 'crosshair';
+      this.updateButtonStates();
     }
-    this.onActivate();
-    this.activeTool = tool;
-    this.editor.getPreviewCanvas().style.cursor = 'crosshair';
-    this.updateButtonStates();
   }
 
   private renderPreview(endX: number, endY: number): void {
     const x = Math.min(this.startX, endX);
     const y = Math.min(this.startY, endY);
-    const width = Math.abs(endX - this.startX);
-    const height = Math.abs(endY - this.startY);
-    const shape = this.buildPreviewShape(x, y, width, height);
-
+    const shape = this.buildPreviewShape(x, y, Math.abs(endX - this.startX), Math.abs(endY - this.startY));
     this.editor.drawOnPreview((ctx) => ShapeOperation.draw(ctx, shape));
   }
 
@@ -134,15 +124,7 @@ export class ShapeDrawer {
   }
 
   private updateButtonStates(): void {
-    const rectBtn = document.getElementById('shape-rect-btn') as HTMLButtonElement;
-    const circleBtn = document.getElementById('shape-circle-btn') as HTMLButtonElement;
-    rectBtn.classList.toggle('btn-primary', this.activeTool === 'rect');
-    circleBtn.classList.toggle('btn-primary', this.activeTool === 'circle');
-  }
-
-  updateState(): void {
-    const hasImage = this.editor.hasImage();
-    (document.getElementById('shape-rect-btn') as HTMLButtonElement).disabled = !hasImage;
-    (document.getElementById('shape-circle-btn') as HTMLButtonElement).disabled = !hasImage;
+    (document.getElementById('shape-rect-btn') as HTMLButtonElement).classList.toggle('btn-primary', this.activeTool === 'rect');
+    (document.getElementById('shape-circle-btn') as HTMLButtonElement).classList.toggle('btn-primary', this.activeTool === 'circle');
   }
 }
