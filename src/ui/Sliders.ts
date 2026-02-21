@@ -9,7 +9,6 @@ export class Sliders {
   private brightnessValue: HTMLSpanElement;
   private contrastValue: HTMLSpanElement;
   private saturationValue: HTMLSpanElement;
-  private applyBtn: HTMLButtonElement;
   private resetBtn: HTMLButtonElement;
 
   constructor(editor: ImageEditor) {
@@ -21,7 +20,6 @@ export class Sliders {
     this.brightnessValue = document.getElementById('brightness-value') as HTMLSpanElement;
     this.contrastValue = document.getElementById('contrast-value') as HTMLSpanElement;
     this.saturationValue = document.getElementById('saturation-value') as HTMLSpanElement;
-    this.applyBtn = document.getElementById('apply-adjustments-btn') as HTMLButtonElement;
     this.resetBtn = document.getElementById('reset-adjustments-btn') as HTMLButtonElement;
 
     this.setupEventListeners();
@@ -37,10 +35,6 @@ export class Sliders {
     this.brightnessSlider.addEventListener('input', onSliderChange);
     this.contrastSlider.addEventListener('input', onSliderChange);
     this.saturationSlider.addEventListener('input', onSliderChange);
-
-    this.applyBtn.addEventListener('click', async () => {
-      await this.editor.flushAdjustments();
-    });
 
     this.resetBtn.addEventListener('click', () => {
       this.resetSliderValues();
@@ -74,7 +68,6 @@ export class Sliders {
     this.brightnessSlider.disabled = !hasImage;
     this.contrastSlider.disabled = !hasImage;
     this.saturationSlider.disabled = !hasImage;
-    this.applyBtn.disabled = !hasImage;
     this.resetBtn.disabled = !hasImage;
 
     // Reset slider UI whenever pending adjustments are cleared externally (after flush)
