@@ -7,6 +7,7 @@ import { CropOperation } from '../operations/CropOperation';
 import { MergeOperation } from '../operations/MergeOperation';
 import { AdjustOperation } from '../operations/AdjustOperation';
 import { ShapeOperation } from '../operations/ShapeOperation';
+import { UpscaleOperation } from '../operations/UpscaleOperation';
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = { brightness: 100, contrast: 100, saturation: 100 };
 
@@ -124,6 +125,10 @@ export class ImageEditor {
 
   async applyShape(shape: ShapeData): Promise<void> {
     await this.applyOperation(new ShapeOperation(shape));
+  }
+
+  async upscale(scale: number): Promise<void> {
+    await this.applyOperation(new UpscaleOperation(scale));
   }
 
   getDefaultAdjustments(): AdjustmentValues {

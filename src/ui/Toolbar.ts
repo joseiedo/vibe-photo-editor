@@ -30,6 +30,11 @@ export class Toolbar {
       URL.revokeObjectURL(url);
     });
 
+    document.getElementById('upscale-btn')?.addEventListener('click', () => {
+      const factor = parseFloat((document.getElementById('upscale-factor') as HTMLInputElement).value);
+      if (factor > 1) this.editor.upscale(factor);
+    });
+
     document.getElementById('flip-h-btn')?.addEventListener('click', () => this.editor.flipHorizontal());
     document.getElementById('flip-v-btn')?.addEventListener('click', () => this.editor.flipVertical());
     document.getElementById('rotate-cw-btn')?.addEventListener('click', () => this.editor.rotate(90));

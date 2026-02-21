@@ -336,6 +336,31 @@ body {
   display: none !important;
 }
 
+/* Small number input */
+.input-sm {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--foreground));
+  width: 60px;
+  text-align: center;
+}
+
+.input-sm:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.muted {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+}
+
 /* Color picker */
 .color-input {
   width: 32px;
