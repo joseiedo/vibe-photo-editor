@@ -8,7 +8,7 @@ import { MergeOperation } from '../operations/MergeOperation';
 import { AdjustOperation } from '../operations/AdjustOperation';
 import { ShapeOperation } from '../operations/ShapeOperation';
 import { UpscaleOperation } from '../operations/UpscaleOperation';
-import { RemoveBgOperation } from '../operations/RemoveBgOperation';
+import { RemoveBgOperation, MaskCache } from '../operations/RemoveBgOperation';
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = { brightness: 100, contrast: 100, saturation: 100 };
 
@@ -16,11 +16,18 @@ function isDefaultAdjustments(adj: AdjustmentValues): boolean {
   return adj.brightness === 100 && adj.contrast === 100 && adj.saturation === 100;
 }
 
+interface PendingRemoveBg {
+  originalImage: ImageBitmap;
+  mask: MaskCache;
+  threshold: number;
+}
+
 export class ImageEditor {
   private canvas: Canvas;
   private history: History;
   private onStateChange: () => void;
   private pendingAdjustments: AdjustmentValues | null = null;
+  private pendingRemoveBg: PendingRemoveBg | null = null;
 
   constructor(canvasElement: HTMLCanvasElement, onStateChange: () => void) {
     this.canvas = new Canvas(canvasElement);
@@ -29,6 +36,8 @@ export class ImageEditor {
   }
 
   async loadImage(file: File): Promise<void> {
+    this.pendingRemoveBg = null;
+    RemoveBgOperation.clearCache();
     const bitmap = await createImageBitmap(file);
     this.canvas.setImage(bitmap);
     this.history.clear();
@@ -38,6 +47,7 @@ export class ImageEditor {
 
   private async applyOperation(operation: Operation): Promise<void> {
     await this.flushAdjustments();
+    await this.flushPendingMask();
 
     const currentImage = this.canvas.getImage();
     if (!currentImage) return;
@@ -116,8 +126,13 @@ export class ImageEditor {
     this.canvas.drawOnPreview(drawFn, filter);
   }
 
-  // Refresh preview without clearing pending adjustments (used after shape tool deactivation)
+  // Refresh preview without clearing pending adjustments (used after shape tool deactivation
+  // and on window resize).
   refreshPreview(): void {
+    if (this.pendingRemoveBg) {
+      this.applyMaskPreview(this.pendingRemoveBg.threshold);
+      return;
+    }
     const filter = this.pendingAdjustments
       ? AdjustOperation.buildFilter(this.pendingAdjustments)
       : undefined;
@@ -132,9 +147,74 @@ export class ImageEditor {
     await this.applyOperation(new UpscaleOperation(scale));
   }
 
-  async removeBg(onProgress: (status: string) => void): Promise<void> {
-    await this.applyOperation(new RemoveBgOperation(onProgress));
+  // --- Background removal ---
+
+  // Runs the model (or uses the mask cache) and stores the result as pending.
+  // The preview is updated immediately; nothing is committed to history yet.
+  async runRemoveBg(threshold: number, onProgress: (status: string) => void): Promise<void> {
+    await this.flushAdjustments();
+    this.pendingRemoveBg = null;
+
+    const currentImage = this.canvas.getImage();
+    if (!currentImage) return;
+
+    const mask = await RemoveBgOperation.fetchMask(currentImage, onProgress);
+    this.pendingRemoveBg = { originalImage: currentImage, mask, threshold };
+    this.applyMaskPreview(threshold);
+    this.onStateChange();
   }
+
+  // Updates the preview instantly when the threshold slider moves.
+  previewRemoveBgThreshold(threshold: number): void {
+    if (!this.pendingRemoveBg) return;
+    this.pendingRemoveBg.threshold = threshold;
+    this.applyMaskPreview(threshold);
+  }
+
+  // Commits the pending removal to history.
+  async commitRemoveBg(): Promise<void> {
+    if (!this.pendingRemoveBg) return;
+    const { mask, threshold } = this.pendingRemoveBg;
+    this.pendingRemoveBg = null;
+
+    const currentImage = this.canvas.getImage();
+    if (!currentImage) return;
+
+    const outCanvas = new OffscreenCanvas(currentImage.width, currentImage.height);
+    RemoveBgOperation.applyMask(currentImage, mask, threshold, outCanvas);
+    const newImage = await createImageBitmap(outCanvas);
+
+    this.canvas.setImage(newImage);
+    this.history.push(newImage, 'Remove Background');
+    this.onStateChange();
+  }
+
+  hasPendingMask(): boolean {
+    return this.pendingRemoveBg !== null;
+  }
+
+  private async flushPendingMask(): Promise<void> {
+    if (this.pendingRemoveBg) {
+      await this.commitRemoveBg();
+    }
+  }
+
+  // Applies the stored mask at the given threshold to the preview canvas (fast — preview resolution only).
+  private applyMaskPreview(threshold: number): void {
+    if (!this.pendingRemoveBg) return;
+    const { originalImage, mask } = this.pendingRemoveBg;
+
+    const previewCanvas = this.canvas.getPreviewCanvas();
+    const w = previewCanvas.width;
+    const h = previewCanvas.height;
+    if (w === 0 || h === 0) return;
+
+    const tmpCanvas = new OffscreenCanvas(w, h);
+    RemoveBgOperation.applyMask(originalImage, mask, threshold, tmpCanvas);
+    this.canvas.drawOffscreenToPreview(tmpCanvas);
+  }
+
+  // --- History ---
 
   getDefaultAdjustments(): AdjustmentValues {
     return { ...DEFAULT_ADJUSTMENTS };
@@ -143,6 +223,7 @@ export class ImageEditor {
   undo(): void {
     const entry = this.history.undo();
     if (entry) {
+      this.pendingRemoveBg = null;
       this.canvas.setImage(entry.image);
       this.onStateChange();
     }
@@ -151,6 +232,7 @@ export class ImageEditor {
   redo(): void {
     const entry = this.history.redo();
     if (entry) {
+      this.pendingRemoveBg = null;
       this.canvas.setImage(entry.image);
       this.onStateChange();
     }

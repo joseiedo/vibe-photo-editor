@@ -35,12 +35,22 @@ export class Toolbar {
       if (factor > 1) this.editor.upscale(factor);
     });
 
+    // Background removal
+    const thresholdSlider = document.getElementById('remove-bg-threshold') as HTMLInputElement;
+    const thresholdValue = document.getElementById('remove-bg-threshold-value') as HTMLSpanElement;
+
+    thresholdSlider?.addEventListener('input', () => {
+      thresholdValue.textContent = thresholdSlider.value;
+      this.editor.previewRemoveBgThreshold(parseInt(thresholdSlider.value, 10));
+    });
+
     document.getElementById('remove-bg-btn')?.addEventListener('click', async () => {
       const btn = document.getElementById('remove-bg-btn') as HTMLButtonElement;
       const status = document.getElementById('remove-bg-status') as HTMLSpanElement;
+      const threshold = parseInt(thresholdSlider.value, 10);
       btn.disabled = true;
       try {
-        await this.editor.removeBg((msg) => { status.textContent = msg; });
+        await this.editor.runRemoveBg(threshold, (msg) => { status.textContent = msg; });
         status.textContent = '';
       } catch (err) {
         status.textContent = 'Failed';
@@ -48,6 +58,10 @@ export class Toolbar {
       } finally {
         btn.disabled = false;
       }
+    });
+
+    document.getElementById('apply-remove-bg-btn')?.addEventListener('click', async () => {
+      await this.editor.commitRemoveBg();
     });
 
     document.getElementById('flip-h-btn')?.addEventListener('click', () => this.editor.flipHorizontal());
@@ -60,10 +74,13 @@ export class Toolbar {
     const canUndo = this.editor.canUndo();
     const canRedo = this.editor.canRedo();
     const hasImage = this.editor.hasImage();
+    const hasPendingMask = this.editor.hasPendingMask();
 
     (document.getElementById('undo-btn') as HTMLButtonElement).disabled = !canUndo;
     (document.getElementById('redo-btn') as HTMLButtonElement).disabled = !canRedo;
     (document.getElementById('download-btn') as HTMLButtonElement).disabled = !hasImage;
+
+    document.getElementById('apply-remove-bg-btn')?.classList.toggle('hidden', !hasPendingMask);
 
     document.getElementById('no-image-message')?.classList.toggle('hidden', hasImage);
   }

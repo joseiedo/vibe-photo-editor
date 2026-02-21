@@ -78,6 +78,12 @@ export class Canvas {
     return this.previewCtx;
   }
 
+  // Draws an offscreen canvas onto the preview at its current size (no resize).
+  drawOffscreenToPreview(offscreen: OffscreenCanvas): void {
+    this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+    this.previewCtx.drawImage(offscreen, 0, 0);
+  }
+
   drawOnPreview(drawFn: (ctx: CanvasRenderingContext2D) => void, filter?: string): void {
     this.updatePreview(filter);
     drawFn(this.previewCtx);
