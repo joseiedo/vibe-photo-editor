@@ -3,8 +3,14 @@ function click(id: string): void {
 }
 
 function isTyping(e: KeyboardEvent): boolean {
-  const tag = (e.target as HTMLElement).tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  const el = e.target as HTMLInputElement;
+  if (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return true;
+  if (el.tagName === 'INPUT' && el.type !== 'range') return true;
+  return false;
+}
+
+function focus(id: string): void {
+  (document.getElementById(id) as HTMLElement | null)?.focus();
 }
 
 export function setupKeyboardShortcuts(): void {
@@ -35,6 +41,13 @@ export function setupKeyboardShortcuts(): void {
       case 'r': click('shape-rect-btn'); break;
       case 'e': click('shape-circle-btn'); break;
       case 'f': click('shape-filled-btn'); break;
+
+      case 'i': click('merge-label'); break;
+
+      case 'b': focus('brightness-slider'); break;
+      case 'k': focus('contrast-slider'); break;
+      case 's': focus('saturation-slider'); break;
+      case '0': click('reset-adjustments-btn'); break;
     }
   });
 }
