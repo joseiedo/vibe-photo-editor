@@ -2,7 +2,9 @@
 
 A browser-based photo editor built with TypeScript and the Canvas API.
 
-> **Warning:** This project is vibecoded. It has no backend, so nothing is saved — all edits are lost on page refresh. Download your work before closing the tab.
+> **Note:** This is a project with the goal to try to use Claude in my workflow. Here, I planned the architecture previously and implemented each feature following baby steps. I don't believe in fully automated AI developers.
+
+> **Warning:** It has no backend, so nothing is saved — all edits are lost on page refresh. Download your work before closing the tab.
 
 ## Features
 
