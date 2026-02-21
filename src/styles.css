@@ -384,6 +384,12 @@ body {
   color: hsl(var(--muted-foreground));
 }
 
+.panel-label {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  user-select: none;
+}
+
 /* Color picker */
 .color-input {
   width: 32px;
