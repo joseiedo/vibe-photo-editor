@@ -10,7 +10,6 @@ export class Sliders {
   private contrastValue: HTMLSpanElement;
   private saturationValue: HTMLSpanElement;
   private resetBtn: HTMLButtonElement;
-
   constructor(editor: ImageEditor) {
     this.editor = editor;
 
@@ -40,6 +39,7 @@ export class Sliders {
       this.resetSliderValues();
       this.editor.resetPreview();
     });
+
   }
 
   private getValues(): AdjustmentValues {
