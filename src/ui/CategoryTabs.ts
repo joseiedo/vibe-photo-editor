@@ -1,8 +1,8 @@
-type Category = 'transform' | 'crop' | 'draw' | 'merge' | 'adjust';
+type Category = 'transform' | 'crop' | 'draw' | 'merge' | 'adjust' | 'filters';
 
 export class CategoryTabs {
   private activeCategory: Category | null = null;
-  private readonly categories: Category[] = ['transform', 'crop', 'draw', 'merge', 'adjust'];
+  private readonly categories: Category[] = ['transform', 'crop', 'draw', 'merge', 'adjust', 'filters'];
   private onDeactivate: Partial<Record<Category, () => void>>;
 
   constructor(onDeactivate: Partial<Record<Category, () => void>> = {}) {

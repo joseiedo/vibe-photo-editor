@@ -32,6 +32,7 @@ export function setupKeyboardShortcuts(): void {
       case 'd': click('cat-draw'); break;
       case 'm': click('cat-merge'); break;
       case 'a': click('cat-adjust'); break;
+      case 'l': click('cat-filters'); break;
 
       case 'h': click('flip-h-btn'); break;
       case 'v': click('flip-v-btn'); break;
@@ -47,6 +48,7 @@ export function setupKeyboardShortcuts(): void {
       case 'b': focus('brightness-slider'); break;
       case 'k': focus('contrast-slider'); break;
       case 's': focus('saturation-slider'); break;
+      case 'p': focus('posterize-slider'); break;
       case '0': click('reset-adjustments-btn'); break;
     }
   });

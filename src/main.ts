@@ -6,6 +6,7 @@ import { MergeDialog } from './ui/MergeDialog';
 import { ShapeDrawer } from './ui/ShapeDrawer';
 import { CategoryTabs } from './ui/CategoryTabs';
 import { MaskBrush } from './ui/MaskBrush';
+import { Filters } from './ui/Filters';
 import { setupKeyboardShortcuts } from './ui/KeyboardShortcuts';
 
 function init(): void {
@@ -13,16 +14,19 @@ function init(): void {
 
   let toolbar!: Toolbar;
   let sliders!: Sliders;
+  let filters!: Filters;
   let categoryTabs!: CategoryTabs;
 
   const editor = new ImageEditor(canvas, () => {
     toolbar.updateState();
     sliders.updateState();
+    filters.updateState();
     categoryTabs.updateState(editor.hasImage());
   });
 
   toolbar = new Toolbar(editor);
   sliders = new Sliders(editor);
+  filters = new Filters(editor);
 
   // Declared with let! so the cross-deactivation callbacks can reference each
   // other without initialisation order issues (callbacks are invoked later).

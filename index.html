@@ -53,6 +53,7 @@
           <button class="btn category-btn" id="cat-draw" disabled>Draw <kbd>D</kbd></button>
           <button class="btn category-btn" id="cat-merge" disabled>Merge <kbd>M</kbd></button>
           <button class="btn category-btn" id="cat-adjust" disabled>Adjust <kbd>A</kbd></button>
+          <button class="btn category-btn" id="cat-filters" disabled>Filters <kbd>L</kbd></button>
         </div>
 
         <div id="panel-transform" class="tool-panel hidden">
@@ -131,6 +132,14 @@
             <span id="saturation-value">100%</span>
           </div>
           <button id="reset-adjustments-btn" class="btn btn-sm btn-ghost" disabled>Reset adjustments <kbd>0</kbd></button>
+        </div>
+
+        <div id="panel-filters" class="tool-panel hidden">
+          <div class="slider-group">
+            <label>Posterize <kbd>P</kbd></label>
+            <input type="range" id="posterize-slider" min="0" max="6" value="0" disabled />
+            <span id="posterize-value">Off</span>
+          </div>
         </div>
       </footer>
 

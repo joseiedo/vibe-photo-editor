@@ -10,6 +10,7 @@ import { ShapeOperation } from '../operations/ShapeOperation';
 import { UpscaleOperation } from '../operations/UpscaleOperation';
 import { RemoveBgOperation, MaskCache } from '../operations/RemoveBgOperation';
 import { RefineMaskOperation, MaskStroke } from '../operations/RefineMaskOperation';
+import { PosterizeOperation } from '../operations/PosterizeOperation';
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = { brightness: 100, contrast: 100, saturation: 100 };
 
@@ -151,6 +152,22 @@ export class ImageEditor {
 
   async upscale(scale: number): Promise<void> {
     await this.applyOperation(new UpscaleOperation(scale));
+  }
+
+  async posterize(levels: number): Promise<void> {
+    await this.applyOperation(new PosterizeOperation(levels));
+  }
+
+  previewPosterize(levels: number): void {
+    const filter = this.pendingAdjustments
+      ? AdjustOperation.buildFilter(this.pendingAdjustments)
+      : undefined;
+    this.canvas.updatePreview(filter);
+    const ctx = this.canvas.getPreviewContext();
+    const previewCanvas = this.canvas.getPreviewCanvas();
+    const imageData = ctx.getImageData(0, 0, previewCanvas.width, previewCanvas.height);
+    PosterizeOperation.applyToPixels(imageData.data, levels);
+    ctx.putImageData(imageData, 0, 0);
   }
 
   async applyRefineMask(strokes: MaskStroke[]): Promise<void> {
