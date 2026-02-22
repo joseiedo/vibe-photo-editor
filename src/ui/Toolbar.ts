@@ -68,6 +68,18 @@ export class Toolbar {
     document.getElementById('flip-v-btn')?.addEventListener('click', () => this.editor.flipVertical());
     document.getElementById('rotate-cw-btn')?.addEventListener('click', () => this.editor.rotate(90));
     document.getElementById('rotate-ccw-btn')?.addEventListener('click', () => this.editor.rotate(-90));
+
+    document.addEventListener('paste', async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) await this.editor.loadImage(file);
+          break;
+        }
+      }
+    });
   }
 
   updateState(): void {
