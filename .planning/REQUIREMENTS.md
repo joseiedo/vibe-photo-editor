@@ -50,12 +50,12 @@
 | DRAW-02 | Phase 1 | Pending |
 | DRAW-03 | Phase 1 | Pending |
 | DRAW-04 | Phase 1 | Pending |
-| STYLE-01 | Phase 1 | Pending |
-| STYLE-02 | Phase 1 | Pending |
-| STYLE-03 | Phase 1 | Pending |
-| STYLE-04 | Phase 1 | Pending |
 | UI-01 | Phase 1 | Pending |
 | HIST-01 | Phase 1 | Pending |
+| STYLE-01 | Phase 2 | Pending |
+| STYLE-02 | Phase 2 | Pending |
+| STYLE-03 | Phase 2 | Pending |
+| STYLE-04 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 10 total
@@ -64,4 +64,4 @@
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after initial definition*
+*Last updated: 2026-02-24 after roadmap creation*
