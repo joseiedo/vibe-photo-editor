@@ -42,3 +42,24 @@ export interface AdjustmentValues {
   contrast: number;
   saturation: number;
 }
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface PencilStroke {
+  points: Point[];
+  color: string;
+  lineWidth: number;
+}
+
+export interface LineData {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  lineWidth: number;
+  arrowhead: boolean;
+}
