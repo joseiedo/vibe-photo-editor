@@ -8,8 +8,8 @@
 ### Drawing Tools
 
 - [x] **DRAW-01**: User can draw freehand strokes using a pencil tool
-- [ ] **DRAW-02**: User can drag to draw a rectangle shape
-- [ ] **DRAW-03**: User can drag to draw a circle/ellipse shape
+- [x] **DRAW-02**: User can drag to draw a rectangle shape
+- [x] **DRAW-03**: User can drag to draw a circle/ellipse shape
 - [x] **DRAW-04**: User can drag to draw a straight line with optional arrowhead
 
 ### Style Controls
@@ -21,7 +21,7 @@
 
 ### UI & History
 
-- [ ] **UI-01**: All drawing tools are accessible from a dedicated "Draw" tab
+- [x] **UI-01**: All drawing tools are accessible from a dedicated "Draw" tab
 - [x] **HIST-01**: Each drawing action (stroke or shape) is individually undoable via undo/redo
 
 ## v2 Requirements
@@ -47,10 +47,10 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DRAW-01 | Phase 1 | Complete |
-| DRAW-02 | Phase 1 | Pending |
-| DRAW-03 | Phase 1 | Pending |
+| DRAW-02 | Phase 1 | Complete |
+| DRAW-03 | Phase 1 | Complete |
 | DRAW-04 | Phase 1 | Complete |
-| UI-01 | Phase 1 | Pending |
+| UI-01 | Phase 1 | Complete |
 | HIST-01 | Phase 1 | Complete |
 | STYLE-01 | Phase 2 | Pending |
 | STYLE-02 | Phase 2 | Pending |
@@ -64,4 +64,4 @@
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after roadmap creation*
+*Last updated: 2026-02-24 after 01-02 completion (DRAW-02, DRAW-03, UI-01 completed)*

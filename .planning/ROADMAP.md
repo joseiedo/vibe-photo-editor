@@ -30,8 +30,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Types + PencilOperation + LineOperation (foundation layer)
-- [ ] 01-02-PLAN.md — ShapeDrawer extension, ImageEditor methods, HTML controls, keyboard shortcuts
+- [x] 01-01-PLAN.md — Types + PencilOperation + LineOperation (foundation layer)
+- [x] 01-02-PLAN.md — ShapeDrawer extension, ImageEditor methods, HTML controls, keyboard shortcuts
 - [ ] 01-03-PLAN.md — Human verification checkpoint for all four drawing tools
 
 ### Phase 2: Style Controls
@@ -52,5 +52,5 @@ Phases execute in numeric order: 1 → 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Drawing Tools | 0/3 | Not started | - |
+| 1. Drawing Tools | 2/3 | In progress | - |
 | 2. Style Controls | 0/TBD | Not started | - |
