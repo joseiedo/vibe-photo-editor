@@ -53,7 +53,7 @@
           <button class="btn category-btn" id="cat-draw" disabled>Draw <kbd>D</kbd></button>
           <button class="btn category-btn" id="cat-merge" disabled>Merge <kbd>M</kbd></button>
           <button class="btn category-btn" id="cat-adjust" disabled>Adjust <kbd>A</kbd></button>
-          <button class="btn category-btn" id="cat-filters" disabled>Filters <kbd>L</kbd></button>
+          <button class="btn category-btn" id="cat-filters" disabled>Filters</button>
         </div>
 
         <div id="panel-transform" class="tool-panel hidden">
@@ -93,6 +93,13 @@
         </div>
 
         <div id="panel-draw" class="tool-panel hidden">
+          <span class="panel-label">Draw</span>
+          <button id="draw-pencil-btn" class="btn btn-icon" title="Pencil (P)"></button>
+          <button id="draw-line-btn" class="btn btn-icon" title="Line (L)"></button>
+          <label class="btn btn-sm" title="Arrow tip on line">
+            <input type="checkbox" id="draw-arrowhead" /> Arrow
+          </label>
+          <div class="separator"></div>
           <span class="panel-label">Shapes</span>
           <button id="shape-rect-btn" class="btn btn-icon" title="Rectangle (R)"></button>
           <button id="shape-circle-btn" class="btn btn-icon" title="Circle (E)"></button>
@@ -136,7 +143,7 @@
 
         <div id="panel-filters" class="tool-panel hidden">
           <div class="slider-group">
-            <label>Posterize <kbd>P</kbd></label>
+            <label>Posterize</label>
             <input type="range" id="posterize-slider" min="0" max="6" value="0" disabled />
             <span id="posterize-value">Off</span>
           </div>
