@@ -12,7 +12,7 @@ The existing photo editor already has rect/circle drawing via `ShapeDrawer` and 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Drawing Tools** - Draw tab with all four tools wired end-to-end and each stroke committed to history
+- [x] **Phase 1: Drawing Tools** - Draw tab with all four tools wired end-to-end and each stroke committed to history
 - [ ] **Phase 2: Style Controls** - Stroke color, fill color, stroke width, and fill toggle available in the Draw tab
 
 ## Phase Details
@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Types + PencilOperation + LineOperation (foundation layer)
 - [x] 01-02-PLAN.md — ShapeDrawer extension, ImageEditor methods, HTML controls, keyboard shortcuts
-- [ ] 01-03-PLAN.md — Human verification checkpoint for all four drawing tools
+- [x] 01-03-PLAN.md — Human verification checkpoint for all four drawing tools
 
 ### Phase 2: Style Controls
 **Goal**: Users can control the visual appearance of all drawing tools through color pickers, stroke width selection, and a fill toggle, with styles persisted across tool switches within a session
@@ -52,5 +52,5 @@ Phases execute in numeric order: 1 → 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Drawing Tools | 2/3 | In progress | - |
+| 1. Drawing Tools | 3/3 | Complete | 2026-02-24 |
 | 2. Style Controls | 0/TBD | Not started | - |
