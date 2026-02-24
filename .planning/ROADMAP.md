@@ -27,7 +27,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can drag to draw a rectangle or circle shape on the photo
   4. User can drag to draw a straight line, with an option to add an arrowhead
   5. User can undo any single stroke or shape and redo it, independent of other operations
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Types + PencilOperation + LineOperation (foundation layer)
+- [ ] 01-02-PLAN.md — ShapeDrawer extension, ImageEditor methods, HTML controls, keyboard shortcuts
+- [ ] 01-03-PLAN.md — Human verification checkpoint for all four drawing tools
 
 ### Phase 2: Style Controls
 **Goal**: Users can control the visual appearance of all drawing tools through color pickers, stroke width selection, and a fill toggle, with styles persisted across tool switches within a session
@@ -47,5 +52,5 @@ Phases execute in numeric order: 1 → 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Drawing Tools | 0/TBD | Not started | - |
+| 1. Drawing Tools | 0/3 | Not started | - |
 | 2. Style Controls | 0/TBD | Not started | - |
