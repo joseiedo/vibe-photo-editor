@@ -1,10 +1,12 @@
-import { createElement, Square, Circle } from 'lucide';
+import { createElement, Square, Circle, Pencil, Minus } from 'lucide';
 import { ImageEditor } from '../editor/ImageEditor';
-import { ShapeData, ShapeType } from '../types';
+import { ShapeData, ShapeType, PencilStroke, LineData } from '../types';
 import { ShapeOperation } from '../operations/ShapeOperation';
+import { LineOperation } from '../operations/LineOperation';
 
 type Handle = 'nw' | 'ne' | 'sw' | 'se';
 type DragType = 'move' | Handle;
+type DrawTool = 'rect' | 'circle' | 'pencil' | 'line';
 
 interface Box { x: number; y: number; width: number; height: number; }
 
@@ -24,7 +26,7 @@ export class ShapeDrawer {
   private editor: ImageEditor;
   private overlay: HTMLDivElement;
   private applyBtn: HTMLButtonElement;
-  private activeTool: ShapeType | null = null;
+  private activeTool: DrawTool | null = null;
   private isFilled = false;
   private isActive = false;
   private box: Box = { x: 0, y: 0, width: 0, height: 0 };
@@ -33,10 +35,35 @@ export class ShapeDrawer {
   private dragStartY = 0;
   private dragStartBox: Box = { x: 0, y: 0, width: 0, height: 0 };
 
+  // Pencil tool state
+  private pencilPoints: Array<{ x: number; y: number }> = [];
+  private isDrawingPencil = false;
+
+  // Line tool state
+  private lineStart: { x: number; y: number } | null = null;
+  private lineEnd: { x: number; y: number } | null = null;
+  private arrowheadEnabled = false;
+
+  // Bound pencil/line mouse handlers (for add/remove EventListener)
+  private readonly onPencilMouseDown: (e: MouseEvent) => void;
+  private readonly onPencilMouseMove: (e: MouseEvent) => void;
+  private readonly onPencilMouseUp: () => void;
+  private readonly onLineMouseDown: (e: MouseEvent) => void;
+  private readonly onLineMouseMove: (e: MouseEvent) => void;
+  private readonly onLineMouseUp: () => void;
+
   constructor(editor: ImageEditor) {
     this.editor = editor;
     this.overlay = document.getElementById('shape-overlay') as HTMLDivElement;
     this.applyBtn = document.getElementById('shape-apply-btn') as HTMLButtonElement;
+
+    this.onPencilMouseDown = this.handlePencilMouseDown.bind(this);
+    this.onPencilMouseMove = this.handlePencilMouseMove.bind(this);
+    this.onPencilMouseUp = this.handlePencilMouseUp.bind(this);
+    this.onLineMouseDown = this.handleLineMouseDown.bind(this);
+    this.onLineMouseMove = this.handleLineMouseMove.bind(this);
+    this.onLineMouseUp = this.handleLineMouseUp.bind(this);
+
     this.initIcons();
     this.setupEventListeners();
   }
@@ -44,6 +71,8 @@ export class ShapeDrawer {
   private initIcons(): void {
     setIcon(document.getElementById('shape-rect-btn') as HTMLButtonElement, createElement(Square), false);
     setIcon(document.getElementById('shape-circle-btn') as HTMLButtonElement, createElement(Circle), false);
+    setIcon(document.getElementById('draw-pencil-btn') as HTMLButtonElement, createElement(Pencil), false);
+    setIcon(document.getElementById('draw-line-btn') as HTMLButtonElement, createElement(Minus), false);
     this.renderFilledIcon();
   }
 
@@ -54,8 +83,19 @@ export class ShapeDrawer {
   }
 
   private setupEventListeners(): void {
+    // Shape tools
     document.getElementById('shape-rect-btn')?.addEventListener('click', () => this.toggleTool('rect'));
     document.getElementById('shape-circle-btn')?.addEventListener('click', () => this.toggleTool('circle'));
+
+    // Pencil/line tools
+    document.getElementById('draw-pencil-btn')?.addEventListener('click', () => this.toggleTool('pencil'));
+    document.getElementById('draw-line-btn')?.addEventListener('click', () => this.toggleTool('line'));
+
+    // Arrowhead checkbox
+    const arrowheadCheckbox = document.getElementById('draw-arrowhead') as HTMLInputElement | null;
+    arrowheadCheckbox?.addEventListener('change', () => {
+      this.arrowheadEnabled = arrowheadCheckbox.checked;
+    });
 
     document.getElementById('shape-filled-btn')?.addEventListener('click', () => {
       this.isFilled = !this.isFilled;
@@ -178,23 +218,220 @@ export class ShapeDrawer {
   }
 
   private renderPreview(): void {
-    if (!this.activeTool) return;
+    if (!this.activeTool || this.activeTool === 'pencil' || this.activeTool === 'line') return;
     const shape = this.buildShape(this.box.x, this.box.y, this.box.width, this.box.height);
     this.editor.drawOnPreview((ctx) => ShapeOperation.draw(ctx, shape));
   }
 
-  private toggleTool(tool: ShapeType): void {
-    if (this.activeTool === tool && this.isActive) {
-      this.deactivate();
-    } else if (this.isActive) {
-      this.activeTool = tool;
-      this.updateOverlay();
-      this.renderPreview();
-      this.updateButtonStates();
+  private toggleTool(tool: DrawTool): void {
+    if (tool === 'pencil' || tool === 'line') {
+      // Freehand tools: deactivate any active shape overlay first
+      if (this.isActive) this.deactivate();
+
+      if (this.activeTool === tool) {
+        // Toggling off the same freehand tool
+        this.deactivateFreehand();
+      } else {
+        // Deactivate any previously active freehand tool
+        if (this.activeTool === 'pencil' || this.activeTool === 'line') {
+          this.deactivateFreehand();
+        }
+        this.activateFreehand(tool);
+      }
     } else {
-      this.activeTool = tool;
-      this.showOverlay();
+      // Shape tools (rect/circle): deactivate any active freehand tool first
+      if (this.activeTool === 'pencil' || this.activeTool === 'line') {
+        this.deactivateFreehand();
+      }
+
+      if (this.activeTool === tool && this.isActive) {
+        this.deactivate();
+      } else if (this.isActive) {
+        this.activeTool = tool;
+        this.updateOverlay();
+        this.renderPreview();
+        this.updateButtonStates();
+      } else {
+        this.activeTool = tool;
+        this.showOverlay();
+      }
     }
+  }
+
+  // --- Freehand tool lifecycle ---
+
+  private activateFreehand(tool: 'pencil' | 'line'): void {
+    this.activeTool = tool;
+    const canvas = this.editor.getPreviewCanvas();
+    canvas.style.cursor = 'crosshair';
+
+    if (tool === 'pencil') {
+      canvas.addEventListener('mousedown', this.onPencilMouseDown);
+    } else {
+      canvas.addEventListener('mousedown', this.onLineMouseDown);
+    }
+
+    this.updateButtonStates();
+  }
+
+  private deactivateFreehand(): void {
+    const canvas = this.editor.getPreviewCanvas();
+    canvas.style.cursor = '';
+
+    canvas.removeEventListener('mousedown', this.onPencilMouseDown);
+    canvas.removeEventListener('mousemove', this.onPencilMouseMove);
+    window.removeEventListener('mouseup', this.onPencilMouseUp);
+
+    canvas.removeEventListener('mousedown', this.onLineMouseDown);
+    canvas.removeEventListener('mousemove', this.onLineMouseMove);
+    window.removeEventListener('mouseup', this.onLineMouseUp);
+
+    this.pencilPoints = [];
+    this.isDrawingPencil = false;
+    this.lineStart = null;
+    this.lineEnd = null;
+
+    this.activeTool = null;
+    this.editor.refreshPreview();
+    this.updateButtonStates();
+  }
+
+  // --- Pencil mouse handlers ---
+
+  private handlePencilMouseDown(e: MouseEvent): void {
+    e.preventDefault();
+    this.isDrawingPencil = true;
+    this.pencilPoints = [];
+    const pt = this.getCanvasPoint(e);
+    this.pencilPoints.push(pt);
+
+    const canvas = this.editor.getPreviewCanvas();
+    canvas.addEventListener('mousemove', this.onPencilMouseMove);
+    window.addEventListener('mouseup', this.onPencilMouseUp);
+  }
+
+  private handlePencilMouseMove(e: MouseEvent): void {
+    if (!this.isDrawingPencil) return;
+
+    const pt = this.getCanvasPoint(e);
+    const prev = this.pencilPoints[this.pencilPoints.length - 1];
+    this.pencilPoints.push(pt);
+
+    // Incremental draw: only draw the new segment directly on the canvas
+    // (avoids full repaint per point per Research Pitfall 6)
+    const canvas = this.editor.getPreviewCanvas();
+    const ctx = canvas.getContext('2d');
+    if (!ctx || !prev) return;
+
+    const colorInput = document.getElementById('shape-color') as HTMLInputElement;
+    const lineWidthSelect = document.getElementById('shape-line-width') as HTMLSelectElement;
+
+    ctx.save();
+    ctx.strokeStyle = colorInput.value;
+    ctx.lineWidth = parseInt(lineWidthSelect.value);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(prev.x, prev.y);
+    ctx.lineTo(pt.x, pt.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private handlePencilMouseUp(): void {
+    if (!this.isDrawingPencil) return;
+    this.isDrawingPencil = false;
+
+    const canvas = this.editor.getPreviewCanvas();
+    canvas.removeEventListener('mousemove', this.onPencilMouseMove);
+    window.removeEventListener('mouseup', this.onPencilMouseUp);
+
+    if (this.pencilPoints.length === 0) return;
+
+    const scale = this.editor.getPreviewScale();
+    const lineWidthSelect = document.getElementById('shape-line-width') as HTMLSelectElement;
+    const colorInput = document.getElementById('shape-color') as HTMLInputElement;
+
+    const stroke: PencilStroke = {
+      points: this.pencilPoints.map(p => ({ x: p.x / scale, y: p.y / scale })),
+      color: colorInput.value,
+      lineWidth: Math.round(parseInt(lineWidthSelect.value) / scale),
+    };
+
+    this.pencilPoints = [];
+    this.editor.applyPencil(stroke);
+  }
+
+  // --- Line mouse handlers ---
+
+  private handleLineMouseDown(e: MouseEvent): void {
+    e.preventDefault();
+    this.lineStart = this.getCanvasPoint(e);
+    this.lineEnd = null;
+
+    const canvas = this.editor.getPreviewCanvas();
+    canvas.addEventListener('mousemove', this.onLineMouseMove);
+    window.addEventListener('mouseup', this.onLineMouseUp);
+  }
+
+  private handleLineMouseMove(e: MouseEvent): void {
+    if (!this.lineStart) return;
+    this.lineEnd = this.getCanvasPoint(e);
+    this.editor.drawOnPreview((ctx) => {
+      LineOperation.draw(ctx, this.buildLine());
+    });
+  }
+
+  private handleLineMouseUp(): void {
+    const canvas = this.editor.getPreviewCanvas();
+    canvas.removeEventListener('mousemove', this.onLineMouseMove);
+    window.removeEventListener('mouseup', this.onLineMouseUp);
+
+    if (!this.lineStart || !this.lineEnd) {
+      this.lineStart = null;
+      this.lineEnd = null;
+      return;
+    }
+
+    const scale = this.editor.getPreviewScale();
+    const line: LineData = {
+      x1: this.lineStart.x / scale,
+      y1: this.lineStart.y / scale,
+      x2: this.lineEnd.x / scale,
+      y2: this.lineEnd.y / scale,
+      color: (document.getElementById('shape-color') as HTMLInputElement).value,
+      lineWidth: Math.round(parseInt((document.getElementById('shape-line-width') as HTMLSelectElement).value) / scale),
+      arrowhead: this.arrowheadEnabled,
+    };
+
+    this.lineStart = null;
+    this.lineEnd = null;
+    this.editor.applyLine(line);
+  }
+
+  // --- Helpers ---
+
+  private buildLine(): LineData {
+    const colorInput = document.getElementById('shape-color') as HTMLInputElement;
+    const lineWidthSelect = document.getElementById('shape-line-width') as HTMLSelectElement;
+    return {
+      x1: this.lineStart!.x,
+      y1: this.lineStart!.y,
+      x2: this.lineEnd!.x,
+      y2: this.lineEnd!.y,
+      color: colorInput.value,
+      lineWidth: parseInt(lineWidthSelect.value),
+      arrowhead: this.arrowheadEnabled,
+    };
+  }
+
+  private getCanvasPoint(e: MouseEvent): { x: number; y: number } {
+    const canvas = this.editor.getPreviewCanvas();
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height),
+    };
   }
 
   private showOverlay(): void {
@@ -222,7 +459,7 @@ export class ShapeDrawer {
     const colorInput = document.getElementById('shape-color') as HTMLInputElement;
     const lineWidthSelect = document.getElementById('shape-line-width') as HTMLSelectElement;
     return {
-      type: this.activeTool!,
+      type: this.activeTool as ShapeType,
       x, y, width, height,
       color: colorInput.value,
       filled: this.isFilled,
@@ -231,7 +468,7 @@ export class ShapeDrawer {
   }
 
   private async commit(): Promise<void> {
-    if (!this.activeTool) return;
+    if (!this.activeTool || this.activeTool === 'pencil' || this.activeTool === 'line') return;
     const scale = this.editor.getPreviewScale();
     const previewShape = this.buildShape(this.box.x, this.box.y, this.box.width, this.box.height);
     const fullResShape: ShapeData = {
@@ -247,6 +484,11 @@ export class ShapeDrawer {
   }
 
   deactivate(): void {
+    // Deactivate freehand tools if active
+    if (this.activeTool === 'pencil' || this.activeTool === 'line') {
+      this.deactivateFreehand();
+      return;
+    }
     this.activeTool = null;
     this.isActive = false;
     this.dragType = null;
@@ -259,5 +501,7 @@ export class ShapeDrawer {
   private updateButtonStates(): void {
     (document.getElementById('shape-rect-btn') as HTMLButtonElement).classList.toggle('btn-primary', this.activeTool === 'rect');
     (document.getElementById('shape-circle-btn') as HTMLButtonElement).classList.toggle('btn-primary', this.activeTool === 'circle');
+    (document.getElementById('draw-pencil-btn') as HTMLButtonElement)?.classList.toggle('btn-primary', this.activeTool === 'pencil');
+    (document.getElementById('draw-line-btn') as HTMLButtonElement)?.classList.toggle('btn-primary', this.activeTool === 'line');
   }
 }

@@ -1,6 +1,6 @@
 import { Canvas } from './Canvas';
 import { History } from './History';
-import { Operation, CropRegion, MergePosition, AdjustmentValues, ShapeData } from '../types';
+import { Operation, CropRegion, MergePosition, AdjustmentValues, ShapeData, PencilStroke, LineData } from '../types';
 import { FlipOperation } from '../operations/FlipOperation';
 import { RotateOperation } from '../operations/RotateOperation';
 import { CropOperation } from '../operations/CropOperation';
@@ -11,6 +11,8 @@ import { UpscaleOperation } from '../operations/UpscaleOperation';
 import { RemoveBgOperation, MaskCache } from '../operations/RemoveBgOperation';
 import { RefineMaskOperation, MaskStroke } from '../operations/RefineMaskOperation';
 import { PosterizeOperation } from '../operations/PosterizeOperation';
+import { PencilOperation } from '../operations/PencilOperation';
+import { LineOperation } from '../operations/LineOperation';
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = { brightness: 100, contrast: 100, saturation: 100 };
 
@@ -148,6 +150,14 @@ export class ImageEditor {
 
   async applyShape(shape: ShapeData): Promise<void> {
     await this.applyOperation(new ShapeOperation(shape));
+  }
+
+  async applyPencil(stroke: PencilStroke): Promise<void> {
+    await this.applyOperation(new PencilOperation(stroke));
+  }
+
+  async applyLine(line: LineData): Promise<void> {
+    await this.applyOperation(new LineOperation(line));
   }
 
   async upscale(scale: number): Promise<void> {
