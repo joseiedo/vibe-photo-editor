@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 1 of 2 (Drawing Tools)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-24 — Roadmap created
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-24 — Completed 01-01 (Operation type definitions and rendering classes)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: -
+- Total plans completed: 1
+- Average duration: 1 min
+- Total execution time: 1 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-drawing-tools | 1/3 done | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: -
+- Last 5 plans: 01-01 (1 min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -45,6 +45,8 @@ Recent decisions affecting current work:
 - Destructive drawing via applyOperation() — integrates with existing history/undo without new layer infrastructure
 - New "Draw" tab — consistent with existing CategoryTabs pattern
 - Extend ShapeDrawer vs. new DrawingController — ShapeDrawer already exists for rect/circle; extend it to cover all tools
+- Static draw() on each Operation class allows ShapeDrawer to reuse the same rendering logic for live previews (established in 01-01)
+- PencilOperation single-point guard draws a filled circle so dotting the canvas always produces visible output (established in 01-01)
 
 ### Pending Todos
 
@@ -57,5 +59,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Roadmap created, ready to plan Phase 1
+Stopped at: Completed 01-01-PLAN.md (Point/PencilStroke/LineData types + PencilOperation + LineOperation)
 Resume file: None

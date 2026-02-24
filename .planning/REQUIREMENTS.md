@@ -7,10 +7,10 @@
 
 ### Drawing Tools
 
-- [ ] **DRAW-01**: User can draw freehand strokes using a pencil tool
+- [x] **DRAW-01**: User can draw freehand strokes using a pencil tool
 - [ ] **DRAW-02**: User can drag to draw a rectangle shape
 - [ ] **DRAW-03**: User can drag to draw a circle/ellipse shape
-- [ ] **DRAW-04**: User can drag to draw a straight line with optional arrowhead
+- [x] **DRAW-04**: User can drag to draw a straight line with optional arrowhead
 
 ### Style Controls
 
@@ -22,7 +22,7 @@
 ### UI & History
 
 - [ ] **UI-01**: All drawing tools are accessible from a dedicated "Draw" tab
-- [ ] **HIST-01**: Each drawing action (stroke or shape) is individually undoable via undo/redo
+- [x] **HIST-01**: Each drawing action (stroke or shape) is individually undoable via undo/redo
 
 ## v2 Requirements
 
@@ -46,12 +46,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DRAW-01 | Phase 1 | Pending |
+| DRAW-01 | Phase 1 | Complete |
 | DRAW-02 | Phase 1 | Pending |
 | DRAW-03 | Phase 1 | Pending |
-| DRAW-04 | Phase 1 | Pending |
+| DRAW-04 | Phase 1 | Complete |
 | UI-01 | Phase 1 | Pending |
-| HIST-01 | Phase 1 | Pending |
+| HIST-01 | Phase 1 | Complete |
 | STYLE-01 | Phase 2 | Pending |
 | STYLE-02 | Phase 2 | Pending |
 | STYLE-03 | Phase 2 | Pending |
