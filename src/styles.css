@@ -235,6 +235,16 @@ body {
   text-align: center;
 }
 
+.image-size-label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  pointer-events: none;
+}
+
 .no-image-message.hidden {
   display: none;
 }

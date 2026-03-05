@@ -293,6 +293,11 @@ export class ImageEditor {
     return this.canvas.getImage() !== null;
   }
 
+  getImageSize(): { width: number; height: number } | null {
+    const img = this.canvas.getImage();
+    return img ? { width: img.width, height: img.height } : null;
+  }
+
   async exportAsBlob(format: 'png' | 'jpeg'): Promise<Blob> {
     return this.canvas.exportAsBlob(format);
   }

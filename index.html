@@ -19,6 +19,7 @@
           <button id="redo-btn" class="btn btn-ghost" disabled>Redo <kbd>Ctrl+Y</kbd></button>
         </div>
         <div class="toolbar-right">
+          <input type="text" id="export-name" class="input-sm" placeholder="filename" style="width:120px" />
           <select id="export-format" class="select">
             <option value="png">PNG</option>
             <option value="jpeg">JPEG</option>
@@ -44,6 +45,7 @@
         <div id="no-image-message" class="no-image-message">
           <p>Upload an image to start editing</p>
         </div>
+        <span id="image-size-label" class="image-size-label hidden"></span>
       </main>
 
       <footer class="toolbar-bottom">
@@ -63,9 +65,9 @@
           <button id="rotate-ccw-btn" class="btn tool-btn">−90° <kbd>[</kbd></button>
           <button id="rotate-cw-btn" class="btn tool-btn">+90° <kbd>]</kbd></button>
           <div class="separator"></div>
-          <input type="number" id="upscale-factor" class="input-sm" value="2" min="1.1" max="8" step="0.5" />
+          <input type="number" id="upscale-factor" class="input-sm" value="2" min="0.01" max="8" step="0.1" />
           <span class="muted">×</span>
-          <button id="upscale-btn" class="btn tool-btn">Upscale</button>
+          <button id="upscale-btn" class="btn tool-btn">Scale</button>
           <div class="separator"></div>
           <div class="slider-group">
             <label>Threshold</label>
@@ -89,6 +91,11 @@
         </div>
 
         <div id="panel-crop" class="tool-panel hidden">
+          <input type="number" id="crop-width" class="input-sm" placeholder="W" min="1" style="width:60px" />
+          <span class="muted">×</span>
+          <input type="number" id="crop-height" class="input-sm" placeholder="H" min="1" style="width:60px" />
+          <span class="muted">px</span>
+          <div class="separator"></div>
           <button id="crop-btn" class="btn tool-btn">Start Crop</button>
         </div>
 

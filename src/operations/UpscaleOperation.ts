@@ -21,6 +21,6 @@ export class UpscaleOperation extends BaseOperation {
   }
 
   getDescription(): string {
-    return `Upscale ${this.scale}×`;
+    return `${this.scale < 1 ? 'Downscale' : 'Upscale'} ${this.scale}×`;
   }
 }

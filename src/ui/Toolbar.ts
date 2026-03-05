@@ -21,18 +21,20 @@ export class Toolbar {
     document.getElementById('download-btn')?.addEventListener('click', async () => {
       await this.editor.flushAdjustments();
       const format = (document.getElementById('export-format') as HTMLSelectElement).value as 'png' | 'jpeg';
+      const nameInput = (document.getElementById('export-name') as HTMLInputElement).value.trim();
+      const name = nameInput || 'edited-image';
       const blob = await this.editor.exportAsBlob(format);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `edited-image.${format}`;
+      a.download = `${name}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
     });
 
     document.getElementById('upscale-btn')?.addEventListener('click', () => {
       const factor = parseFloat((document.getElementById('upscale-factor') as HTMLInputElement).value);
-      if (factor > 1) this.editor.upscale(factor);
+      if (factor > 0 && factor !== 1) this.editor.upscale(factor);
     });
 
     // Background removal
@@ -96,5 +98,10 @@ export class Toolbar {
     (document.getElementById('refine-brush-btn') as HTMLButtonElement).disabled = !hasImage;
 
     document.getElementById('no-image-message')?.classList.toggle('hidden', hasImage);
+
+    const sizeLabel = document.getElementById('image-size-label') as HTMLSpanElement;
+    const size = this.editor.getImageSize();
+    sizeLabel.classList.toggle('hidden', !size);
+    if (size) sizeLabel.textContent = `${size.width} × ${size.height} px`;
   }
 }

@@ -16,6 +16,8 @@ export class CropSelector {
   private editor: ImageEditor;
   private overlay: HTMLDivElement;
   private cropBtn: HTMLButtonElement;
+  private widthInput: HTMLInputElement;
+  private heightInput: HTMLInputElement;
   private isActive = false;
   private box: Box = { x: 0, y: 0, width: 0, height: 0 };
   private dragType: DragType | null = null;
@@ -27,6 +29,8 @@ export class CropSelector {
     this.editor = editor;
     this.overlay = document.getElementById('crop-overlay') as HTMLDivElement;
     this.cropBtn = document.getElementById('crop-btn') as HTMLButtonElement;
+    this.widthInput = document.getElementById('crop-width') as HTMLInputElement;
+    this.heightInput = document.getElementById('crop-height') as HTMLInputElement;
     this.setupEventListeners();
   }
 
@@ -77,6 +81,10 @@ export class CropSelector {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isActive) this.cancelCrop();
     });
+
+    // Typing into the size inputs resizes the selection
+    this.widthInput.addEventListener('input', () => this.applyInputSize());
+    this.heightInput.addEventListener('input', () => this.applyInputSize());
   }
 
   private beginDrag(clientX: number, clientY: number, type: DragType): void {
@@ -121,6 +129,7 @@ export class CropSelector {
 
     this.box = { x, y, width, height };
     this.updateOverlay();
+    this.updateSizeInputs();
   }
 
   private updateOverlay(): void {
@@ -136,6 +145,33 @@ export class CropSelector {
     this.overlay.style.height = `${this.box.height}px`;
   }
 
+  private updateSizeInputs(): void {
+    const scale = this.editor.getPreviewScale();
+    this.widthInput.value = String(Math.round(this.box.width / scale));
+    this.heightInput.value = String(Math.round(this.box.height / scale));
+  }
+
+  private applyInputSize(): void {
+    if (!this.isActive) return;
+    const scale = this.editor.getPreviewScale();
+    const canvas = this.editor.getPreviewCanvas();
+    const { width: cw, height: ch } = canvas.getBoundingClientRect();
+
+    const wPx = parseInt(this.widthInput.value, 10);
+    const hPx = parseInt(this.heightInput.value, 10);
+    if (!wPx || !hPx) return;
+
+    const dispW = clamp(wPx * scale, MIN_SIZE, cw);
+    const dispH = clamp(hPx * scale, MIN_SIZE, ch);
+    this.box = {
+      x: clamp(this.box.x, 0, cw - dispW),
+      y: clamp(this.box.y, 0, ch - dispH),
+      width: dispW,
+      height: dispH,
+    };
+    this.updateOverlay();
+  }
+
   private startCropMode(): void {
     this.onActivate();
     this.isActive = true;
@@ -146,6 +182,7 @@ export class CropSelector {
 
     this.overlay.classList.remove('hidden');
     this.updateOverlay();
+    this.updateSizeInputs();
     this.cropBtn.textContent = 'Apply Crop';
     this.cropBtn.classList.add('btn-primary');
   }
@@ -168,6 +205,8 @@ export class CropSelector {
     this.isActive = false;
     this.dragType = null;
     this.overlay.classList.add('hidden');
+    this.widthInput.value = '';
+    this.heightInput.value = '';
     this.cropBtn.textContent = 'Start Crop';
     this.cropBtn.classList.remove('btn-primary');
   }
